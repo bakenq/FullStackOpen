@@ -2,16 +2,18 @@ import { useState } from 'react'
 
 const App = () => {
   const [persons, setPersons] = useState([
-    { name: 'Arto Hellas' }
+    { name: 'Arto Hellas', number: '040-1234567' }
   ])
   const [newName, setNewName] = useState('')
+  const [newNumber, setNewNumber] = useState('')
 
   const addPerson = (event) => {
     event.preventDefault()
 
     const trimmedName = newName.trim()
-    if (trimmedName === '') {
-      alert('Name cannot be empty')
+    const trimmedNumber = newNumber.trim()
+    if (trimmedName === '' || trimmedNumber === '') {
+      alert('Please fill in both name and number')
       return
     }
 
@@ -21,14 +23,20 @@ const App = () => {
     } else {
       const personObject = {
         name: trimmedName,
+        number: trimmedNumber
       }
       setPersons(persons.concat(personObject))
       setNewName('')
+      setNewNumber('')
     }
   }
 
   const handleNameChange = (event) => {
     setNewName(event.target.value)
+  }
+
+  const handleNumberChange = (event) => {
+    setNewNumber(event.target.value)
   }
 
   return (
@@ -43,6 +51,13 @@ const App = () => {
           />
         </div>
         <div>
+          number:
+          <input
+            value={newNumber}
+            onChange={handleNumberChange}
+          />
+        </div>
+        <div>
           <button type="submit">add</button>
         </div>
       </form>
@@ -50,7 +65,7 @@ const App = () => {
       <h2>Numbers</h2>
       <div>
         {persons.map((person, index) => (
-          <p key={index}>{person.name}</p>
+          <p key={index}>{person.name} {person.number}</p>
         ))}
       </div>
 
