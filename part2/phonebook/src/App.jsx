@@ -60,6 +60,20 @@ const App = () => {
     }
   }
 
+  const removePerson = (id, name) => {
+    if (window.confirm(`Delete ${name}?`)) {
+      personService
+        .removePerson(id)
+        .then(() => {
+          setPersons(persons.filter(person => person.id !== id))
+        })
+        .catch(error => {
+          console.error('Error deleting person:', error)
+          alert(`Failed to delete ${name} from phonebook.`)
+        })
+    }
+  }
+
   const personsToShow = searchTerm === ''
     ? persons
     : persons.filter(person => person.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -86,7 +100,10 @@ const App = () => {
       />
 
       <h2>Numbers</h2>
-      <Persons persons={personsToShow} />
+      <Persons
+        persons={personsToShow}
+        handleRemovePerson={removePerson}
+      />
 
     </div>
   )
