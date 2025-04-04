@@ -36,10 +36,27 @@ const App = () => {
       return
     }
 
-    const nameExists = persons.some(person => person.name.toLowerCase() === trimmedName.toLowerCase())
+    const nameExists = persons.find(p => p.name.toLowerCase() === trimmedName.toLowerCase())
 
     if (nameExists) {
-      alert(`${trimmedName} is already added to phonebook`)
+      if (window.confirm(`${trimmedName} is already added to phonebook, replace the old number with a new one?`)) {
+        const updatedPersonObject = { ...nameExists, number: trimmedNumber }
+
+        personService
+          .update(nameExists.id, updatedPersonObject)
+          .then(returnedPerson => {
+            setPersons(persons.map(person => person.id !== nameExists.id ? person : returnedPerson))
+            
+            setNewName('')
+            setNewNumber('')
+          })
+          .catch(error => {
+            console.error('Error updating person:', error)
+            alert(`Failed to update ${nameExists.name}'s number.`)
+          })
+      }
+      setNewName('')
+      setNewNumber('')
     } else {
       const personObject = {
         name: trimmedName,
