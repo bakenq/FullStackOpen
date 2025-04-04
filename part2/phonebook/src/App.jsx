@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+
+import personService from './services/persons'
 
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
@@ -12,16 +13,16 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
+    personService
+      .getAll()
+      .then(initialPersons => {
+        setPersons(initialPersons)
       })
       .catch(error => {
         console.error('Error fetching data:', error)
+        alert('Failed to load phonebook data from server.')
       })
-  }
-  , [])
+  }, [])
 
 
   const addPerson = (event) => {
@@ -29,23 +30,33 @@ const App = () => {
 
     const trimmedName = newName.trim()
     const trimmedNumber = newNumber.trim()
+
     if (trimmedName === '' || trimmedNumber === '') {
       alert('Please fill in both name and number')
       return
     }
 
     const nameExists = persons.some(person => person.name.toLowerCase() === trimmedName.toLowerCase())
+
     if (nameExists) {
       alert(`${trimmedName} is already added to phonebook`)
     } else {
       const personObject = {
         name: trimmedName,
         number: trimmedNumber,
-        id: persons.length ? Math.max(...persons.map(p => p.id)) + 1 : 1
       }
-      setPersons(persons.concat(personObject))
-      setNewName('')
-      setNewNumber('')
+      personService
+        .create(personObject)
+        .then(returnedPerson => {
+          setPersons(persons.concat(returnedPerson))
+
+          setNewName('')
+          setNewNumber('')
+        })
+        .catch(error => {
+          console.error('Error adding person:', error)
+          alert(`Failed to add ${personObject.name} to phonebook.`)
+        })
     }
   }
 
