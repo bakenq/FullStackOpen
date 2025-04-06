@@ -36,7 +36,7 @@ const App = () => {
     }
 
     setNotification({ message, type });
-    
+
     notificationTimeoutId.current = setTimeout(() => {
       setNotification({ message: null, type: null });
       notificationTimeoutId.current = null;
@@ -67,13 +67,19 @@ const App = () => {
             setPersons(persons.map(person => person.id !== nameExists.id ? person : returnedPerson))
 
             displayNotification(`Updated number for ${returnedPerson.name}`, 'success');
-            
+
             setNewName('')
             setNewNumber('')
           })
           .catch(error => {
             console.error('Error updating person:', error)
-            displayNotification(`Failed to update number for ${nameExists.name}.`, 'error');
+            if (error.response && error.response.status === 404) {
+              displayNotification(`Information of ${nameExists.name} has already been removed from the server.`, 'error')
+              setPersons(persons.filter(p => p.id !== nameExists.id))
+            } else {
+              displayNotification(`Failed to update number for ${nameExists.name}. Error: ${error.message || 'Unknown Error'}.`, 'error')
+            }
+
           })
       }
     } else {
@@ -93,7 +99,7 @@ const App = () => {
         })
         .catch(error => {
           console.error('Error adding person:', error)
-          displayNotification(`Failed to add ${personObject.name}.`, 'error');
+          displayNotification(`Failed to add ${personObject.name}. Error: ${error.message || 'Unknown error'}`, 'error');
         })
     }
   }
