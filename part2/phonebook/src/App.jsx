@@ -1,16 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+import './index.css'
 
 import personService from './services/persons'
 
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import Notification from './components/Notification'
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [notification, setNotification] = useState({ message: null, type: null });
+  const notificationTimeoutId = useRef(null);
 
   useEffect(() => {
     personService
@@ -23,6 +28,20 @@ const App = () => {
         alert('Failed to load phonebook data from server.')
       })
   }, [])
+
+
+  const displayNotification = (message, type = 'success', duration = 5000) => {
+    if (notificationTimeoutId.current) {
+      clearTimeout(notificationTimeoutId.current);
+    }
+
+    setNotification({ message, type });
+    
+    notificationTimeoutId.current = setTimeout(() => {
+      setNotification({ message: null, type: null });
+      notificationTimeoutId.current = null;
+    }, duration);
+  };
 
 
   const addPerson = (event) => {
@@ -46,17 +65,17 @@ const App = () => {
           .update(nameExists.id, updatedPersonObject)
           .then(returnedPerson => {
             setPersons(persons.map(person => person.id !== nameExists.id ? person : returnedPerson))
+
+            displayNotification(`Updated number for ${returnedPerson.name}`, 'success');
             
             setNewName('')
             setNewNumber('')
           })
           .catch(error => {
             console.error('Error updating person:', error)
-            alert(`Failed to update ${nameExists.name}'s number.`)
+            displayNotification(`Failed to update number for ${nameExists.name}.`, 'error');
           })
       }
-      setNewName('')
-      setNewNumber('')
     } else {
       const personObject = {
         name: trimmedName,
@@ -67,12 +86,14 @@ const App = () => {
         .then(returnedPerson => {
           setPersons(persons.concat(returnedPerson))
 
+          displayNotification(`Added ${returnedPerson.name}`, 'success');
+
           setNewName('')
           setNewNumber('')
         })
         .catch(error => {
           console.error('Error adding person:', error)
-          alert(`Failed to add ${personObject.name} to phonebook.`)
+          displayNotification(`Failed to add ${personObject.name}.`, 'error');
         })
     }
   }
@@ -83,10 +104,12 @@ const App = () => {
         .removePerson(id)
         .then(() => {
           setPersons(persons.filter(person => person.id !== id))
+
+          displayNotification(`Deleted ${name}`, 'success');
         })
         .catch(error => {
           console.error('Error deleting person:', error)
-          alert(`Failed to delete ${name} from phonebook.`)
+          displayNotification(`Failed to delete ${name}.`, 'error');
         })
     }
   }
@@ -102,6 +125,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification notification={notification} />
+
       <Filter
         searchTerm={searchTerm}
         handleSearchChange={handleSearchChange}
