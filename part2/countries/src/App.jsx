@@ -32,6 +32,8 @@ function App() {
 
   const handleQueryChange = (event) => setQuery(event.target.value)
 
+  const handleShowCountry = (country) => setQuery(country.name.common)
+
   return (
     <div>
       find countries <input value={query} onChange={handleQueryChange} />
@@ -39,6 +41,7 @@ function App() {
       <Results
         query={query}
         filteredCountries={filteredCountries}
+        handleShowCountry={handleShowCountry}
       />
     </div>
   )

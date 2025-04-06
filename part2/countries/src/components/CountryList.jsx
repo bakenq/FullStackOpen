@@ -1,12 +1,15 @@
 import React from 'react'
 
-export default function CountryList({ countries }) {
+export default function CountryList({ countries, handleShowCountry }) {
     if (!countries || countries.length === 0) return null
 
   return (
     <div>
         {countries.map(country => (
-            <p key={country.cca3}>{country.name.common}</p>
+            <div key={country.cca3}>
+                <span>{country.name.common}</span>
+                <button onClick={() => handleShowCountry(country)}>Show</button>
+            </div>
         ))}
     </div>
   )
