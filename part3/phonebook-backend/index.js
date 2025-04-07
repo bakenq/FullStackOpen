@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+app.use(express.json())
 
 let persons = [
     {
@@ -57,6 +58,38 @@ app.delete('/api/persons/:id', (request, response) => {
     persons = persons.filter(p => p.id !== id)
 
     response.status(204).end()
+})
+
+app.post('/api/persons', (request, response) => {
+    const body = request.body
+
+    if (!body.name || !body.number) {
+        return response.status(400).json({ error: 'name or number missing' })
+    }
+
+    const nameExists = persons.some(p => p.name.toLowerCase() === body.name.toLowerCase())
+    if (nameExists) {
+        return response.status(400).json({ error: 'name must be unique' })
+    }
+
+    const generateId = () => {
+        const maxId = 1000000
+        let newId
+        do {
+            newId = String(Math.floor(Math.random() * maxId))
+        } while (persons.some(p => p.id === newId))
+        return newId
+    }
+
+    const person = {
+        name: body.name,
+        number: body.number,
+        id: generateId()
+    }
+
+    persons = persons.concat(person)
+
+    response.status(201).json(person)
 })
 
 
