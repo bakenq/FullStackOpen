@@ -28,29 +28,33 @@ app.get('/api/persons', (request, response, next) => {
         .catch(error => next(error))
 })
 
-/*
-app.get('/info', (request, response) => {
+
+app.get('/info', (request, response, next) => {
     const currentTime = new Date()
-    const personCount = persons.length
 
-    const responseHtml = `
-        <p>Phonebook has info for ${personCount} people</p>
-        <p>${currentTime}</p>
-    `
-
-    response.send(responseHtml)
+    Person.countDocuments()
+        .then(count => {
+            const responseHtml = `
+                <p>Phonebook has info for ${count} people</p>
+                <p>${currentTime}</p>
+             `
+            response.send(responseHtml)
+        })
+        .catch(error => next(error))
 })
-*/
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
     const id = request.params.id
-    const person = persons.find(p => p.id === id)
 
-    if (person) {
-        response.json(person)
-    } else {
-        response.status(404).end()
-    }
+    Person.findById(id)
+        .then(person => {
+            if (person) {
+                response.json(person)
+            } else {
+                response.status(404).json({ error: 'Person not found' })
+            }
+        })
+        .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -91,6 +95,32 @@ app.post('/api/persons', (request, response, next) => {
         .catch(error => next(error))
 })
 
+app.put('/api/persons/:id', (request, response, next) => {
+    const id = request.params.id
+    const body = request.body
+
+    if (!body.name || !body.number) {
+        return response.status(400).json({ error: 'name or number missing' })
+    }
+
+    const personDataToUpdate = {
+        name: body.name,
+        number: body.number
+    }
+
+    const options = { new: true, runValidators: true, context: 'query' }
+
+    Person.findByIdAndUpdate(id, personDataToUpdate, options)
+        .then(updatedPerson => {
+            if (updatedPerson) {
+                response.json(updatedPerson)
+            } else {
+                response.status(404).json({ error: 'Person not found' })
+            }
+        })
+        .catch(error => next(error))
+})
+
 
 
 const unknownEndpoint = (request, response) => {
@@ -106,7 +136,7 @@ const errorHandler = (error, request, response, next) => {
     if (error.name === 'CastError') {
         return response.status(400).send({ error: 'malformatted id' })
     }
-    
+
     next(error)
 }
 
