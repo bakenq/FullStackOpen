@@ -64,29 +64,22 @@ app.post('/api/persons', (request, response) => {
         return response.status(400).json({ error: 'name or number missing' })
     }
 
+    /*
     const nameExists = persons.some(p => p.name.toLowerCase() === body.name.toLowerCase())
     if (nameExists) {
         return response.status(400).json({ error: 'name must be unique' })
     }
+    */
 
-    const generateId = () => {
-        const maxId = 1000000
-        let newId
-        do {
-            newId = String(Math.floor(Math.random() * maxId))
-        } while (persons.some(p => p.id === newId))
-        return newId
-    }
-
-    const person = {
+    const person = new Person ({
         name: body.name,
-        number: body.number,
-        id: generateId()
-    }
+        number: body.number
+    })
 
-    persons = persons.concat(person)
-
-    response.status(201).json(person)
+    person.save()
+        .then(savedPerson => {
+            response.json(savedPerson)
+        })
 })
 
 
