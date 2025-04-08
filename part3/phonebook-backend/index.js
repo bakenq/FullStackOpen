@@ -20,13 +20,15 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 app.use(express.static('dist'))
 
 
-app.get('/api/persons', (request, response) => {
+app.get('/api/persons', (request, response, next) => {
     Person.find({})
         .then(persons => {
             response.json(persons)
         })
+        .catch(error => next(error))
 })
 
+/*
 app.get('/info', (request, response) => {
     const currentTime = new Date()
     const personCount = persons.length
@@ -38,6 +40,7 @@ app.get('/info', (request, response) => {
 
     response.send(responseHtml)
 })
+*/
 
 app.get('/api/persons/:id', (request, response) => {
     const id = request.params.id
@@ -50,14 +53,19 @@ app.get('/api/persons/:id', (request, response) => {
     }
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-    const id = request.params.id
-    persons = persons.filter(p => p.id !== id)
-
-    response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+    Person.findByIdAndDelete(request.params.id)
+        .then(result => {
+            if (result) {
+                response.status(204).end()
+            } else {
+                response.status(404).json({ error: 'Person not found' })
+            }
+        })
+        .catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const body = request.body
 
     if (!body.name || !body.number) {
@@ -71,7 +79,7 @@ app.post('/api/persons', (request, response) => {
     }
     */
 
-    const person = new Person ({
+    const person = new Person({
         name: body.name,
         number: body.number
     })
@@ -80,7 +88,29 @@ app.post('/api/persons', (request, response) => {
         .then(savedPerson => {
             response.json(savedPerson)
         })
+        .catch(error => next(error))
 })
+
+
+
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+    console.error('Error name:', error.name)
+    console.error('Error message:', error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+    
+    next(error)
+}
+
+app.use(errorHandler)
 
 
 const PORT = process.env.PORT || 3001
