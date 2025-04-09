@@ -5,3 +5,13 @@ This repository contains my solutions and code developed while working through t
 ## Repository Structure
 
 The code in this repository is organized into folders, corresponding to the different parts of the course (e.g., `part0`, `part1`, `part2`, etc.). Each folder contains the exercises related to that part.
+
+## Progress
+
+| Part          | Status      | Exercises |
+| :-----------: | :---------: | :-------: |
+| [0](./part0/) | Done        | 6/6       |
+| [1](./part1/) | Done        | 14/14     |
+| [2](./part2/) | Done        | 20/20     |
+| [3](./part3/) | Done        | 22/22     |
+| [4](./part4/) | In Progress | 0/23      |
