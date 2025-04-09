@@ -51,12 +51,13 @@ const App = () => {
     const trimmedNumber = newNumber.trim()
 
     if (trimmedName === '' || trimmedNumber === '') {
-      alert('Please fill in both name and number')
+      displayNotification('Name and number cannot be empty.', 'error')
       return
     }
 
     const nameExists = persons.find(p => p.name.toLowerCase() === trimmedName.toLowerCase())
 
+    // Update existing person
     if (nameExists) {
       if (window.confirm(`${trimmedName} is already added to phonebook, replace the old number with a new one?`)) {
         const updatedPersonObject = { ...nameExists, number: trimmedNumber }
@@ -72,16 +73,12 @@ const App = () => {
             setNewNumber('')
           })
           .catch(error => {
-            console.error('Error updating person:', error)
-            if (error.response && error.response.status === 404) {
-              displayNotification(`Information of ${nameExists.name} has already been removed from the server.`, 'error')
-              setPersons(persons.filter(p => p.id !== nameExists.id))
-            } else {
-              displayNotification(`Failed to update number for ${nameExists.name}. Error: ${error.message || 'Unknown Error'}.`, 'error')
-            }
-
+            console.error('Error updating person:', error.response?.data || error)
+            const errorMessage = error.response?.data?.error || 'Unknown error'
+            displayNotification(errorMessage, 'error')
           })
       }
+      // Add new person
     } else {
       const personObject = {
         name: trimmedName,
@@ -98,8 +95,9 @@ const App = () => {
           setNewNumber('')
         })
         .catch(error => {
-          console.error('Error adding person:', error)
-          displayNotification(`Failed to add ${personObject.name}. Error: ${error.message || 'Unknown error'}`, 'error');
+          console.error('Error adding person:', error.response?.data || error)
+          const errorMessage = error.response?.data?.error || 'Unknown error'
+          displayNotification(errorMessage, 'error');
         })
     }
   }
