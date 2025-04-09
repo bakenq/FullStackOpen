@@ -20,6 +20,10 @@ export default [
       '@stylistic/js/linebreak-style': ['error', 'unix'],
       '@stylistic/js/quotes': ['error', 'single'],
       '@stylistic/js/semi': ['error', 'never'],
+      '@stylistic/js/no-trailing-spaces': 'error',
+      '@stylistic/js/arrow-spacing': ['error', { before: true, after: true }],
+      '@stylistic/js/object-curly-spacing': ['error', 'always'],
+      'eqeqeq': 'error',
     }
   },
   {
