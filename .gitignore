@@ -23,3 +23,11 @@ node_modules
 
 # Local exercises
 local_exercises
+
+# env
+.env
+.env.*
+*.env
+
+# Rest client requests
+requests
