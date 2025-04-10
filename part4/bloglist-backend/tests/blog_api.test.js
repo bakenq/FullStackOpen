@@ -93,6 +93,32 @@ describe('blog api creation (POST)', () => {
     assert.ok(response.body.id)
   })
 
+  test('returns status 400 Bad Request if title is missing', async () => {
+    const newBlogWithoutTitle = {
+      author: 'John Doe',
+      url: 'http://example.com/missing-title',
+      likes: 5
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlogWithoutTitle)
+      .expect(400)
+  })
+
+  test('returns status 400 Bad Request if url is missing', async () => {
+    const newBlogWithoutUrl = {
+      title: 'Blog Without URL',
+      author: 'John Nourl',
+      likes: 3
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlogWithoutUrl)
+      .expect(400)
+  })
+
 })
 
 
