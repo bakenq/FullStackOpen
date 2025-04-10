@@ -4,7 +4,6 @@ const supertest = require('supertest')
 const mongoose = require('mongoose')
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
-
 const app = require('../app')
 
 const api = supertest(app)
@@ -20,7 +19,7 @@ beforeEach(async () => {
 })
 
 
-describe('blog api', () => {
+describe('blog api fetching', () => {
 
   test('blogs are returned as json', async () => {
     await api
@@ -42,6 +41,10 @@ describe('blog api', () => {
     assert.ok(firstBlog.id, 'First blog should have id property')
     assert.strictEqual(firstBlog._id, undefined, 'id should be equal to _id')
   })
+
+})
+
+describe('blog api creation (POST)', () => {
 
   test('a valid blog can be added', async () => {
     const newBlog = {
@@ -69,6 +72,25 @@ describe('blog api', () => {
 
     const titles = blogsAtEnd.map(blog => blog.title)
     assert(titles.includes(newBlog.title), 'New blog should be in the list of blogs')
+  })
+
+  test('if likes property is missing, it should default to 0', async () => {
+    const newBlogWithoutLikes = {
+      title: 'New Blog Without Likes',
+      author: 'John Bro',
+      url: 'http://example.com/default-likes'
+    }
+
+    const response = await api
+      .post('/api/blogs')
+      .send(newBlogWithoutLikes)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    assert.strictEqual(response.body.likes, 0, 'Likes should default to 0')
+
+    assert.strictEqual(response.body.title, newBlogWithoutLikes.title)
+    assert.ok(response.body.id)
   })
 
 })
