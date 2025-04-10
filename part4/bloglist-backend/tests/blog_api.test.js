@@ -43,6 +43,34 @@ describe('blog api', () => {
     assert.strictEqual(firstBlog._id, undefined, 'id should be equal to _id')
   })
 
+  test('a valid blog can be added', async () => {
+    const newBlog = {
+      title: 'New Blog',
+      author: 'John Doe',
+      url: 'http://example.com',
+      likes: 8
+    }
+
+    const initialBlogsInDb = await helper.blogsInDb()
+
+    const response = await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    assert.strictEqual(response.body.title, newBlog.title)
+    assert.strictEqual(response.body.author, newBlog.author)
+    assert.strictEqual(response.body.url, newBlog.url)
+    assert.strictEqual(response.body.likes, newBlog.likes)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, initialBlogsInDb.length + 1, 'Blog count should increase by 1')
+
+    const titles = blogsAtEnd.map(blog => blog.title)
+    assert(titles.includes(newBlog.title), 'New blog should be in the list of blogs')
+  })
+
 })
 
 
