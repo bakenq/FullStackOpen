@@ -50,17 +50,28 @@ blogsRouter.post('/', userExtractor, async (request, response, next) => {
   }
 })
 
-blogsRouter.delete('/:id', async (request, response, next) => {
+blogsRouter.delete('/:id', userExtractor, async (request, response, next) => {
   const idToDelete = request.params.id
+  const user = request.user
 
   try {
-    const result = await Blog.findByIdAndDelete(idToDelete)
-
-    if (result) {
-      response.status(204).end()
-    } else {
-      response.status(404).json({ error: 'blog not found' })
+    if (!user) {
+      return response.status(401).json({ error: 'token missing or invalid' })
     }
+
+    const blog = await Blog.findById(idToDelete)
+
+    if (!blog) {
+      return response.status(404).json({ error: 'blog not found' })
+    }
+
+    if (!blog.user || blog.user.toString() !== user._id.toString()) {
+      return response.status(403).json({ error: 'User not authorized to delete this blog' })
+    }
+
+    await Blog.findByIdAndDelete(idToDelete)
+
+    response.status(204).end()
   } catch (error) {
     next(error)
   }
