@@ -19,6 +19,6 @@ The code in this repository is organized into folders, corresponding to the diff
 
 ## Course certificates
 
-### Full Stack Open: Core
+### Full Stack Open: Core (Part 0-4)
 
 ![Full Stack Open core Certificate](./img/certificate-fullstack.png)
