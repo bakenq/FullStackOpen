@@ -1,6 +1,6 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
-const User = require('../models/user')
+const { userExtractor } = require('../utils/middleware')
 
 
 blogsRouter.get('/', async (request, response, next) => {
@@ -16,25 +16,14 @@ blogsRouter.get('/', async (request, response, next) => {
   }
 })
 
-blogsRouter.post('/', async (request, response, next) => {
+blogsRouter.post('/', userExtractor, async (request, response, next) => {
+  const user = request.user
+  const body = request.body
+
   try {
-    const body = request.body
-
-    const firstUser = await User.findOne({})
-    if (!firstUser) {
-      return response.status(400).json({ error: 'Cannot add blog: No users found in the database.' })
-    }
-
-    /*
-    if (!body.userId) {
-      return response.status(400).json({ error: 'userId missing' })
-    }
-
-    const user = await User.findById(body.userId)
     if (!user) {
-      return response.status(400).json({ error: 'user not found' })
+      return response.status(401).json({ error: 'token missing or invalid' })
     }
-    */
 
     if (!body.title || !body.url) {
       return response.status(400).json({ error: 'title or url missing' })
@@ -45,13 +34,13 @@ blogsRouter.post('/', async (request, response, next) => {
       author: body.author,
       url: body.url,
       likes: body.likes === undefined ? 0 : body.likes,
-      user: firstUser._id,
+      user: user._id,
     })
 
     const savedBlog = await blog.save()
 
-    firstUser.blogs = firstUser.blogs.concat(savedBlog._id)
-    await firstUser.save()
+    user.blogs = user.blogs.concat(savedBlog._id)
+    await user.save()
 
     const populatedBlog = await Blog.findById(savedBlog.id).populate('user', { username: 1, name: 1, id: 1 })
 
