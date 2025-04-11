@@ -16,3 +16,9 @@ The code in this repository is organized into folders, corresponding to the diff
 | [3](./part3/) | Done        | 22/22     |
 | [4](./part4/) | Done        | 23/23     |
 | [5](./part5/) | In Progress | 0/23      |
+
+## Course certificates
+
+### Full Stack Open: Core
+
+![Full Stack Open core Certificate](./img/certificate-fullstack.png)
