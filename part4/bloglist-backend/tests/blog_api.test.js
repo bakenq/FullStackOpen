@@ -4,13 +4,23 @@ const supertest = require('supertest')
 const mongoose = require('mongoose')
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
 const app = require('../app')
 
 const api = supertest(app)
 
 
+let testUserId
+
 beforeEach(async () => {
   await Blog.deleteMany({})
+  await User.deleteMany({})
+
+  const passwordHash = await bcrypt.hash('testpassword', 10)
+  const user = new User({ username: 'testuser', name: 'Test User', passwordHash })
+  const savedUser = await user.save()
+  testUserId = savedUser.id
 
   const blogObjects = helper.initialBlogs
     .map(blog => new Blog(blog))
@@ -51,7 +61,8 @@ describe('blog api creation (POST)', () => {
       title: 'New Blog',
       author: 'John Doe',
       url: 'http://example.com',
-      likes: 8
+      likes: 8,
+      userId: testUserId
     }
 
     const initialBlogsInDb = await helper.blogsInDb()
@@ -78,7 +89,8 @@ describe('blog api creation (POST)', () => {
     const newBlogWithoutLikes = {
       title: 'New Blog Without Likes',
       author: 'John Bro',
-      url: 'http://example.com/default-likes'
+      url: 'http://example.com/default-likes',
+      userId: testUserId
     }
 
     const response = await api
@@ -91,6 +103,20 @@ describe('blog api creation (POST)', () => {
 
     assert.strictEqual(response.body.title, newBlogWithoutLikes.title)
     assert.ok(response.body.id)
+  })
+
+  test('returns status 400 Bad Request if userId is missing', async () => {
+    const newBlogWithoutUserId = {
+      title: 'Blog Without User',
+      author: 'No User Author',
+      url: 'http://example.com/no-user',
+      likes: 5
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlogWithoutUserId)
+      .expect(400)
   })
 
   test('returns status 400 Bad Request if title is missing', async () => {
