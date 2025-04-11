@@ -10,20 +10,41 @@ const app = require('../app')
 
 const api = supertest(app)
 
-
+let token
 let testUserId
 
 beforeEach(async () => {
   await Blog.deleteMany({})
   await User.deleteMany({})
 
-  const passwordHash = await bcrypt.hash('testpassword', 10)
-  const user = new User({ username: 'testuser', name: 'Test User', passwordHash })
+  const testUserCredentials = {
+    username: 'testuser',
+    name: 'Test User',
+    password: 'testpassword'
+  }
+  const passwordHash = await bcrypt.hash(testUserCredentials.password, 10)
+  const user = new User({
+    username: testUserCredentials.username,
+    name: testUserCredentials.name,
+    passwordHash
+  })
   const savedUser = await user.save()
   testUserId = savedUser.id
 
+  const loginResponse = await api
+    .post('/api/login')
+    .send({
+      username: testUserCredentials.username,
+      password: testUserCredentials.password,
+    })
+    .expect(200)
+
+  token = loginResponse.body.token
+  assert.ok(token, 'Login should return a token')
+
+
   const blogObjects = helper.initialBlogs
-    .map(blog => new Blog(blog))
+    .map(blog => new Blog({ ...blog, user: savedUser._id }))
   const promiseArray = blogObjects.map(blog => blog.save())
   await Promise.all(promiseArray)
 })
@@ -56,30 +77,30 @@ describe('when there are initially some blogs saved', () => {
 
 describe('blog api creation (POST)', () => {
 
-  test('a valid blog can be added', async () => {
+  test('a valid blog can be added WHEN logged in', async () => {
+    const initialBlogsCount = (await helper.blogsInDb()).length
+
     const newBlog = {
       title: 'New Blog',
       author: 'John Doe',
       url: 'http://example.com',
       likes: 8,
-      userId: testUserId
     }
-
-    const initialBlogsInDb = await helper.blogsInDb()
 
     const response = await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
 
     assert.strictEqual(response.body.title, newBlog.title)
-    assert.strictEqual(response.body.author, newBlog.author)
-    assert.strictEqual(response.body.url, newBlog.url)
-    assert.strictEqual(response.body.likes, newBlog.likes)
+    assert.ok(response.body.id, 'Response should contain an id')
+    assert.ok(response.body.user, 'Response should include user info')
+    assert.strictEqual(response.body.user.id, testUserId, 'Blog associated with correct user')
 
     const blogsAtEnd = await helper.blogsInDb()
-    assert.strictEqual(blogsAtEnd.length, initialBlogsInDb.length + 1, 'Blog count should increase by 1')
+    assert.strictEqual(blogsAtEnd.length, initialBlogsCount + 1, 'Blog count should increase by 1')
 
     const titles = blogsAtEnd.map(blog => blog.title)
     assert(titles.includes(newBlog.title), 'New blog should be in the list of blogs')
@@ -90,11 +111,11 @@ describe('blog api creation (POST)', () => {
       title: 'New Blog Without Likes',
       author: 'John Bro',
       url: 'http://example.com/default-likes',
-      userId: testUserId
     }
 
     const response = await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlogWithoutLikes)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -102,21 +123,7 @@ describe('blog api creation (POST)', () => {
     assert.strictEqual(response.body.likes, 0, 'Likes should default to 0')
 
     assert.strictEqual(response.body.title, newBlogWithoutLikes.title)
-    assert.ok(response.body.id)
-  })
-
-  test('returns status 400 Bad Request if userId is missing', async () => {
-    const newBlogWithoutUserId = {
-      title: 'Blog Without User',
-      author: 'No User Author',
-      url: 'http://example.com/no-user',
-      likes: 5
-    }
-
-    await api
-      .post('/api/blogs')
-      .send(newBlogWithoutUserId)
-      .expect(400)
+    assert.strictEqual(response.body.user.id, testUserId)
   })
 
   test('returns status 400 Bad Request if title is missing', async () => {
@@ -128,6 +135,7 @@ describe('blog api creation (POST)', () => {
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlogWithoutTitle)
       .expect(400)
   })
@@ -141,8 +149,22 @@ describe('blog api creation (POST)', () => {
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlogWithoutUrl)
       .expect(400)
+  })
+
+  test('returns status 401 Unauthorized if token is missing', async () => {
+    const newBlog = {
+      title: 'Unauthorized Blog',
+      author: 'John Unauthorized',
+      url: 'http://example.com/unauthorized',
+      likes: 1,
+    }
+
+    await api.post('/api/blogs')
+      .send(newBlog)
+      .expect(401)
   })
 
 })
@@ -155,6 +177,7 @@ describe('deletion of a blog', () => {
 
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(204)
 
     const blogsAtEnd = await helper.blogsInDb()
@@ -169,6 +192,7 @@ describe('deletion of a blog', () => {
 
     await api
       .delete(`/api/blogs/${invalidId}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(400)
   })
 
@@ -177,6 +201,7 @@ describe('deletion of a blog', () => {
 
     await api
       .delete(`/api/blogs/${nonExistingId}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(404)
   })
 
