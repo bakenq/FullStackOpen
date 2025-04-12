@@ -8,11 +8,12 @@ import loginService from './services/login'
 import Blog from './components/Blog'
 import LoginForm from './components/LoginForm'
 import BlogForm from './components/BlogForm'
+import Notification from './components/Notification'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
-  const [errorMessage, setErrorMessage] = useState(null)
   const [user, setUser] = useState(null)
+  const [notification, setNotification] = useState({ message: null, type: '' })
 
   useEffect(() => {
     if (user) {
@@ -33,6 +34,14 @@ const App = () => {
     }
   }, [])
 
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type })
+    setTimeout(() => {
+      setNotification({ message: null, type: '' })
+    }, 5000)
+  }
+
   const handleLogin = async (credentials) => {
 
     try {
@@ -46,11 +55,8 @@ const App = () => {
       setUser(user)
 
     } catch (exception) {
-      setErrorMessage('Wrong credentials')
       console.error(exception)
-      setTimeout(() => {
-        setErrorMessage(null)
-      }, 5000)
+      showNotification('Wrong username or password', 'error')
     }
   }
 
@@ -64,41 +70,44 @@ const App = () => {
     try {
       const returnedBlog = await blogService.create(blogObject)
       setBlogs(blogs.concat(returnedBlog))
-      //setErrorMessage(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`)
+      showNotification(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success')
     } catch (exception) {
       console.error(exception)
-      //setErrorMessage('Blog creation failed')
+      const errorMessage = exception.response?.data?.error || 'Failed to add blog'
+      showNotification(errorMessage, 'error')
     }
-}
+  }
 
 
-if (user === null) {
+  if (user === null) {
+    return (
+      <div>
+        <h2>Log in to application</h2>
+        <Notification message={notification.message} type={notification.type} />
+        <LoginForm handleLoginAttempt={handleLogin} />
+      </div>
+    )
+  }
+
   return (
     <div>
-      <h2>Log in to application</h2>
-      <LoginForm handleLoginAttempt={handleLogin} />
+      <h2>Blogs</h2>
+      <Notification message={notification.message} type={notification.type} />
+      <div>
+        <p>
+          {user.name} logged in
+          <button onClick={handleLogout}>logout</button>
+        </p>
+
+        <BlogForm createBlog={addBlog} />
+
+      </div>
+      <h3>Bloglist</h3>
+      {blogs.map(blog =>
+        <Blog key={blog.id} blog={blog} />
+      )}
     </div>
   )
-}
-
-return (
-  <div>
-    <h2>Blogs</h2>
-    <div>
-      <p>
-        {user.name} logged in
-        <button onClick={handleLogout}>logout</button>
-      </p>
-
-      <BlogForm createBlog={addBlog} />
-
-    </div>
-    <h3>Bloglist</h3>
-    {blogs.map(blog =>
-      <Blog key={blog.id} blog={blog} />
-    )}
-  </div>
-)
 }
 
 export default App
