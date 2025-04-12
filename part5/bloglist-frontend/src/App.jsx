@@ -60,34 +60,45 @@ const App = () => {
     blogService.setToken(null)
   }
 
+  const addBlog = async (blogObject) => {
+    try {
+      const returnedBlog = await blogService.create(blogObject)
+      setBlogs(blogs.concat(returnedBlog))
+      //setErrorMessage(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`)
+    } catch (exception) {
+      console.error(exception)
+      //setErrorMessage('Blog creation failed')
+    }
+}
 
-  if (user === null) {
-    return (
-      <div>
-        <h2>Log in to application</h2>
-        <LoginForm handleLoginAttempt={handleLogin} />
-      </div>
-    )
-  }
 
+if (user === null) {
   return (
     <div>
-      <h2>Blogs</h2>
-      <div>
-        <p>
-          {user.name} logged in
-          <button onClick={handleLogout}>logout</button>
-        </p>
-
-        {/*<BlogForm createBlog={addBlog} />*/}
-
-      </div>
-      <h3>Bloglist</h3>
-      {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} />
-      )}
+      <h2>Log in to application</h2>
+      <LoginForm handleLoginAttempt={handleLogin} />
     </div>
   )
+}
+
+return (
+  <div>
+    <h2>Blogs</h2>
+    <div>
+      <p>
+        {user.name} logged in
+        <button onClick={handleLogout}>logout</button>
+      </p>
+
+      <BlogForm createBlog={addBlog} />
+
+    </div>
+    <h3>Bloglist</h3>
+    {blogs.map(blog =>
+      <Blog key={blog.id} blog={blog} />
+    )}
+  </div>
+)
 }
 
 export default App
