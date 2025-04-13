@@ -21,6 +21,11 @@ const testBlog = {
   url: 'https://playwright.dev',
 }
 
+const blogA = { title: 'Blog A - Low Likes', author: 'Author A', url: 'http://a.com' }
+const blogB = { title: 'Blog B - Zero Likes', author: 'Author B', url: 'http://b.com' }
+const blogC = { title: 'Blog C - High Likes', author: 'Author C', url: 'http://c.com' }
+
+
 describe('Bloglist app', () => {
   beforeEach(async ({ page, request }) => {
     await request.post('/api/testing/reset')
@@ -146,6 +151,57 @@ describe('Bloglist app', () => {
 
         const removeButtonUser2 = blogContainerUser2.getByRole('button', { name: 'Remove' })
         await expect(removeButtonUser2).not.toBeVisible()
+      })
+    })
+
+    describe('and multiple blogs exist', () => {
+      beforeEach(async ({ page }) => {
+        await createBlog(page, blogA)
+        await createBlog(page, blogB)
+        await createBlog(page, blogC)
+
+        await expect(page.locator('.blog', { hasText: blogA.title })).toBeVisible()
+        await expect(page.locator('.blog', { hasText: blogB.title })).toBeVisible()
+        await expect(page.locator('.blog', { hasText: blogC.title })).toBeVisible()
+      })
+
+      test('blogs are ordered by likes (descending)', async ({ page }) => {
+        const blogContainerA = page.locator('.blog', { hasText: blogA.title })
+        const blogContainerB = page.locator('.blog', { hasText: blogB.title })
+        const blogContainerC = page.locator('.blog', { hasText: blogC.title })
+
+        // View details and like blogs to establish order (C=2, A=1, B=0)
+        // Like Blog C twice
+        await blogContainerC.getByRole('button', { name: 'view' }).click()
+        const likeButtonC = blogContainerC.getByRole('button', { name: 'Like' })
+        await likeButtonC.click()
+        await expect(blogContainerC.locator('.blog-likes')).toContainText('Likes: 1')
+        await likeButtonC.click()
+        await expect(blogContainerC.locator('.blog-likes')).toContainText('Likes: 2')
+
+        // Like Blog A once
+        await blogContainerA.getByRole('button', { name: 'view' }).click()
+        const likeButtonA = blogContainerA.getByRole('button', { name: 'Like' })
+        await likeButtonA.click()
+        await expect(blogContainerA.locator('.blog-likes')).toContainText('Likes: 1')
+        // Blog B remains at 0 likes
+
+
+        const blogElements = await page.locator('.blog').all()
+        expect(blogElements.length).toBe(3)
+
+        // Check order of blogs
+        await expect(blogElements[0]).toContainText(blogC.title)
+        await expect(blogElements[1]).toContainText(blogA.title)
+        await expect(blogElements[2]).toContainText(blogB.title)
+
+        // ALternatively use element position
+        const boundingBoxC = await blogContainerC.boundingBox()
+        const boundingBoxA = await blogContainerA.boundingBox()
+        const boundingBoxB = await blogContainerB.boundingBox()
+
+        expect(boundingBoxC.y).toBeLessThan(boundingBoxA.y)
+        expect(boundingBoxA.y).toBeLessThan(boundingBoxB.y)
       })
     })
   })
