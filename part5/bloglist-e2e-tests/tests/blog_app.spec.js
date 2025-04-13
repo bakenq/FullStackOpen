@@ -77,5 +77,23 @@ describe('Bloglist app', () => {
       await expect(newBlogDiv).toBeVisible()
       await expect(newBlogDiv).toContainText(testBlog.author)
     })
+
+    describe('and a blog exists', () => {
+      beforeEach(async ({ page }) => {
+        await createBlog(page, testBlog)
+
+        await page.locator('.blog').filter({ hasText: testBlog.title }).waitFor()
+      })
+
+      test('it can be liked', async ({ page }) => {
+        const blogContainer = page.locator('.blog').filter({ hasText: testBlog.title })
+        await blogContainer.getByRole('button', { name: 'view' }).click()
+
+        const likesLocator = blogContainer.locator('.blog-likes')
+        await expect(likesLocator).toContainText('Likes: 0')
+        await blogContainer.getByRole('button', { name: 'Like' }).click()
+        await expect(likesLocator).toContainText('Likes: 1')
+      })
+    })
   })
 })
