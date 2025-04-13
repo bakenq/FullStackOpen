@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 // Serivces
 import blogService from './services/blogs'
@@ -9,11 +9,14 @@ import Blog from './components/Blog'
 import LoginForm from './components/LoginForm'
 import BlogForm from './components/BlogForm'
 import Notification from './components/Notification'
+import Togglable from './components/Togglable'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
   const [notification, setNotification] = useState({ message: null, type: '' })
+
+  const blogFormRef = useRef()
 
   useEffect(() => {
     if (user) {
@@ -71,6 +74,8 @@ const App = () => {
       const returnedBlog = await blogService.create(blogObject)
       setBlogs(blogs.concat(returnedBlog))
       showNotification(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success')
+
+      blogFormRef.current.toggleVisibility()
     } catch (exception) {
       console.error(exception)
       const errorMessage = exception.response?.data?.error || 'Failed to add blog'
@@ -89,6 +94,7 @@ const App = () => {
     )
   }
 
+  // Logged-in view
   return (
     <div>
       <h2>Blogs</h2>
@@ -99,9 +105,12 @@ const App = () => {
           <button onClick={handleLogout}>logout</button>
         </p>
 
-        <BlogForm createBlog={addBlog} />
+        <Togglable buttonLabel="Create New Blog" ref={blogFormRef}>
+          <BlogForm createBlog={addBlog} />
+        </Togglable>
 
       </div>
+      
       <h3>Bloglist</h3>
       {blogs.map(blog =>
         <Blog key={blog.id} blog={blog} />
