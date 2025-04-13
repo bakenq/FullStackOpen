@@ -21,7 +21,7 @@ const App = () => {
   useEffect(() => {
     if (user) {
       blogService.getAll().then(blogs =>
-        setBlogs(blogs)
+        setBlogs(sortBlogs(blogs))
       )
     } else {
       setBlogs([])
@@ -36,6 +36,11 @@ const App = () => {
       blogService.setToken(user.token)
     }
   }, [])
+
+
+  const sortBlogs = (blogAray) => {
+    return [...blogAray].sort((a, b) => (b.likes || 0) - (a.likes || 0))
+  }
 
 
   const showNotification = (message, type = 'success') => {
@@ -72,13 +77,41 @@ const App = () => {
   const addBlog = async (blogObject) => {
     try {
       const returnedBlog = await blogService.create(blogObject)
-      setBlogs(blogs.concat(returnedBlog))
+      setBlogs(sortBlogs(blogs.concat(returnedBlog)))
       showNotification(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success')
 
       blogFormRef.current.toggleVisibility()
     } catch (exception) {
       console.error(exception)
       const errorMessage = exception.response?.data?.error || 'Failed to add blog'
+      showNotification(errorMessage, 'error')
+    }
+  }
+
+  const handleLike = async (id) => {
+    const blogToUpdate = blogs.find(b => b.id === id)
+    if (!blogToUpdate) {
+      showNotification('Blog not found', 'error')
+      return
+    }
+
+    const updatedBlogData = {
+      title: blogToUpdate.title,
+      author: blogToUpdate.author,
+      url: blogToUpdate.url,
+      likes: (blogToUpdate.likes || 0) + 1,
+    }
+
+    try {
+      const returnedUpdatedBlog = await blogService.update(id, updatedBlogData)
+
+      setBlogs(sortBlogs(
+        blogs
+          .map(blog => (blog.id === id ? returnedUpdatedBlog : blog))
+      ))
+    } catch (exception) {
+      console.error(exception)
+      const errorMessage = exception.response?.data?.error || 'Failed to update likes'
       showNotification(errorMessage, 'error')
     }
   }
@@ -110,10 +143,10 @@ const App = () => {
         </Togglable>
 
       </div>
-      
+
       <h3>Bloglist</h3>
       {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} />
+        <Blog key={blog.id} blog={blog} handleLike={handleLike} />
       )}
     </div>
   )

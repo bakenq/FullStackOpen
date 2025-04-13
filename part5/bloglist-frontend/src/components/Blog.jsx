@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 
-const Blog = ({ blog }) => {
+const Blog = ({ blog, handleLike }) => {
   const [detailsVisible, setDetailsVisible] = useState(false)
 
   const blogStyle = {
@@ -18,6 +18,10 @@ const Blog = ({ blog }) => {
 
   const buttonLabel = detailsVisible ? 'hide' : 'view'
 
+  const handleLikeClick = () => {
+    handleLike(blog.id)
+  }
+
   return (
     <div style={blogStyle}>
       <div>
@@ -27,10 +31,14 @@ const Blog = ({ blog }) => {
 
       {detailsVisible && (
         <div>
-          <div>{blog.url}</div>
+          <div>
+            <a href={blog.url} target="_blank" rel="noopener noreferrer">
+              {blog.url}
+            </a>
+          </div>
           <div>
             Likes: {blog.likes != undefined ? blog.likes : 0}
-            <button>Like</button>
+            <button onClick={handleLikeClick}>Like</button>
           </div>
           {blog.user && <div>{blog.user.name}</div>}
         </div>
