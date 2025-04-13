@@ -116,6 +116,26 @@ const App = () => {
     }
   }
 
+  const handleDelete = async (id) => {
+    const blogToDelete = blogs.find(b => b.id === id)
+    if (!blogToDelete) {
+      showNotification('Blog not found', 'error')
+      return
+    }
+
+    if (window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author}`)) {
+      try {
+        await blogService.remove(id)
+        setBlogs(blogs.filter(blog => blog.id !== id))
+        showNotification(`Blog ${blogToDelete.title} deleted`, 'success')
+      } catch (exception) {
+        console.error(exception)
+        const errorMessage = exception.response?.data?.error || 'Failed to delete blog'
+        showNotification(errorMessage, 'error')
+      }
+    }
+  }
+
 
   if (user === null) {
     return (
@@ -146,7 +166,13 @@ const App = () => {
 
       <h3>Bloglist</h3>
       {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} handleLike={handleLike} />
+        <Blog
+          key={blog.id}
+          blog={blog}
+          handleLike={handleLike}
+          handleDelete={handleDelete}
+          currentUser={user}
+        />
       )}
     </div>
   )
