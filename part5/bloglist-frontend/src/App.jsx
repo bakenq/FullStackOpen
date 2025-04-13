@@ -123,7 +123,7 @@ const App = () => {
       return
     }
 
-    if (window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author}`)) {
+    if (window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author}?`)) {
       try {
         await blogService.remove(id)
         setBlogs(blogs.filter(blog => blog.id !== id))
