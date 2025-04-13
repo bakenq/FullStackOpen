@@ -22,7 +22,7 @@ const Notification = ({ message, type }) => {
   }
 
   return (
-    <div style={notificationStyle}>
+    <div style={notificationStyle} data-testid='notification'>
       {message}
     </div>
   )
