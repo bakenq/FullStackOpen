@@ -31,29 +31,29 @@ const Blog = ({ blog, handleLike, handleDelete, currentUser }) => {
 
 
   return (
-    <div style={blogStyle}>
-      <div>
+    <div style={blogStyle} className='blog'>
+      <div className='blog-header'>
         {blog.title} {blog.author}
         <button onClick={toggleDetailsVisibility}>{buttonLabel}</button>
       </div>
 
       {detailsVisible && (
-        <div>
-          <div>
+        <div className='blog-details'>
+          <div className='blog-url'>
             <a href={blog.url} target="_blank" rel="noopener noreferrer">
               {blog.url}
             </a>
           </div>
-          <div>
-            Likes: {blog.likes != undefined ? blog.likes : 0}
+          <div className='blog-likes'>
+            Likes: {blog.likes !== undefined ? blog.likes : 0}
             <button onClick={handleLikeClick}>Like</button>
           </div>
           {blog.user && <div>{blog.user.name}</div>}
 
           {canRemove && (
-            <button 
-            onClick={handleDeleteClick}
-            style={{ backgroundColor: 'lightblue'}}
+            <button
+              onClick={handleDeleteClick}
+              style={{ backgroundColor: 'lightblue' }}
             >
               Remove
             </button>

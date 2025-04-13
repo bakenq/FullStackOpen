@@ -1,15 +1,21 @@
-import globals from 'globals';
-import reactRecommended from 'eslint-plugin-react/configs/recommended.js';
-import reactHooks from 'eslint-plugin-react-hooks';
-import reactRefresh from 'eslint-plugin-react-refresh';
+import js from '@eslint/js'
+import globals from 'globals'
+import reactPlugin from 'eslint-plugin-react'
+import pluginReactConfig from 'eslint-plugin-react/configs/recommended.js'
+//import pluginReactJSXRuntimeConfig from 'eslint-plugin-react/configs/jsx-runtime.js'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'eslint.config.js'] },
   {
     files: ['**/*.{js,jsx}'],
-    ...reactRecommended,
+    ...pluginReactConfig,
     languageOptions: {
-      ...reactRecommended.languageOptions,
+      ...pluginReactConfig.languageOptions,
+      parserOptions: pluginReactConfig.languageOptions.parserOptions,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       globals: {
         ...globals.browser,
       }
@@ -19,27 +25,29 @@ export default [
         version: 'detect',
       },
     },
-  },
-
-  {
-    files: ['**/*.{js,jsx}'],
     plugins: {
+      'react': reactPlugin,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
     },
     rules: {
-      'react/react-in-jsx-scope': 'off',
-      'react/prop-types': 'warn',
+      ...pluginReactConfig.rules,
       ...reactHooks.configs.recommended.rules,
 
-      'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^_' }],
+      "indent": ["error", 2],
+      "linebreak-style": ["error", "unix"],
+      "quotes": ["error", "single"],
+      "semi": ["error", "never"],
+      "eqeqeq": "error",
+      "no-trailing-spaces": "error",
+      "object-curly-spacing": ["error", "always"],
+      "arrow-spacing": ["error", { "before": true, "after": true }],
 
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+      "react/prop-types": "warn",
 
-      
+      "no-unused-vars": ["warn", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
+
+      "react/react-in-jsx-scope": "off",
     },
   },
 ];
