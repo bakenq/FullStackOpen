@@ -11,14 +11,11 @@ const anecdoteSlice = createSlice({
   name: 'anecdotes',
   initialState,
   reducers: {
-    voteAnecdote(state, action) {
-      const id = action.payload
-      const anecdoteToChange = state.find(a => a.id === id)
-
-      if (anecdoteToChange) {
-        anecdoteToChange.votes += 1
-      }
-
+    updateAnecdote(state, action) {
+      const updatedAnecdote = action.payload
+      return state.map(anecdote =>
+        anecdote.id !== updatedAnecdote.id ? anecdote : updatedAnecdote
+      )
     },
 
     appendAnecdote(state, action) {
@@ -32,7 +29,7 @@ const anecdoteSlice = createSlice({
 })
 
 
-export const { voteAnecdote, appendAnecdote, setAnecdotes } = anecdoteSlice.actions
+export const { updateAnecdote, appendAnecdote, setAnecdotes } = anecdoteSlice.actions
 
 
 export const initializeAnecdotes = () => {
@@ -57,6 +54,31 @@ export const createAnecdote = (content) => {
     } catch (error) {
       console.error('Failed to create anecdote:', error)
       dispatch(showNotification(`Error creating anecdote: ${error.message || 'Unknown error'}`, 5));
+    }
+  }
+}
+
+export const voteAnecdote = (id) => {
+  return async (dispatch, getState) => {
+    const state = getState()
+    const anecdoteToVote = state.anecdotes.find(a => a.id === id)
+
+    if (!anecdoteToVote) {
+      console.error(`Anecdote with id ${id} not found`)
+      return
+    }
+
+    const updatedAnecdote = { ...anecdoteToVote, votes: anecdoteToVote.votes + 1 }
+
+    try {
+      const returnedAnecdote = await anecdoteService.update(id, updatedAnecdote)
+      dispatch(updateAnecdote(returnedAnecdote))
+
+      const message = `You voted for '${returnedAnecdote.content}'`
+      dispatch(showNotification(message, 5))
+    } catch (error) {
+      console.error('Failed to update anecdote:', error)
+      dispatch(showNotification(`Error voting for anecdote: ${error.message || 'Unknown error'}`, 5));
     }
   }
 }
