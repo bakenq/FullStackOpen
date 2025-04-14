@@ -13,9 +13,6 @@ const AnecdoteForm = () => {
     if (!content) return
 
     dispatch(createAnecdote(content))
-
-    const message = `You created '${content}'`
-    dispatch(showNotification(message, 5))
   }
 
   return (
