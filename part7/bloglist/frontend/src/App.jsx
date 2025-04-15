@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { showNotification } from './reducers/notificationSlice'
+import { initializeBlogs, createBlog } from './reducers/blogSlice'
 
 // Serivces
 import blogService from './services/blogs'
@@ -14,21 +15,19 @@ import Notification from './components/Notification'
 import Togglable from './components/Togglable'
 
 const App = () => {
-  const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
 
   const notification = useSelector((state) => state.notification)
-  const dispatch = useDispatch()
+  const blogs = useSelector((state) => state.blogs)
 
+  const dispatch = useDispatch()
   const blogFormRef = useRef()
 
   useEffect(() => {
     if (user) {
-      blogService.getAll().then((blogs) => setBlogs(sortBlogs(blogs)))
-    } else {
-      setBlogs([])
+      dispatch(initializeBlogs())
     }
-  }, [user])
+  }, [user, dispatch])
 
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
@@ -42,6 +41,7 @@ const App = () => {
   const sortBlogs = (blogAray) => {
     return [...blogAray].sort((a, b) => (b.likes || 0) - (a.likes || 0))
   }
+  const sortedBlogs = sortBlogs(blogs)
 
   const handleLogin = async (credentials) => {
     try {
@@ -64,23 +64,10 @@ const App = () => {
   }
 
   const addBlog = async (blogObject) => {
-    try {
-      const returnedBlog = await blogService.create(blogObject)
-      setBlogs(sortBlogs(blogs.concat(returnedBlog)))
-      dispatch(showNotification(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success', 5))
+    const newBlog = await dispatch(createBlog(blogObject))
 
+    if (newBlog) {
       blogFormRef.current.toggleVisibility()
-    } catch (exception) {
-      console.error(exception)
-      let errorMessage = 'Failed to create blog'
-
-      if (exception.response && exception.response.status === 401) {
-        errorMessage = exception.response.data.error || 'Session expired. Please log in again.'
-        handleLogout()
-      } else if (exception.response && exception.response.data && exception.response.data.error) {
-        errorMessage = exception.response.data.error
-      }
-      dispatch(showNotification(errorMessage, 'error', 5))
     }
   }
 
@@ -101,7 +88,8 @@ const App = () => {
     try {
       const returnedUpdatedBlog = await blogService.update(id, updatedBlogData)
 
-      setBlogs(sortBlogs(blogs.map((blog) => (blog.id === id ? returnedUpdatedBlog : blog))))
+      // TEMPORARY RE-FETCH
+      dispatch(initializeBlogs())
     } catch (exception) {
       console.error(exception)
       const errorMessage = exception.response?.data?.error || 'Failed to update likes'
@@ -119,7 +107,8 @@ const App = () => {
     if (window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author}?`)) {
       try {
         await blogService.remove(id)
-        setBlogs(blogs.filter((blog) => blog.id !== id))
+        // TEMPORARY RE-FETCH
+        dispatch(initializeBlogs())
 
         dispatch(showNotification(`Blog ${blogToDelete.title} deleted`, 'success', 5))
       } catch (exception) {
