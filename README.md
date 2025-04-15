@@ -8,16 +8,16 @@ The code in this repository is organized into folders, corresponding to the diff
 
 ## Progress
 
-| Part          | Status      | Exercises |
+|     Part      |   Status    | Exercises |
 | :-----------: | :---------: | :-------: |
-| [0](./part0/) | Done        | 6/6       |
-| [1](./part1/) | Done        | 14/14     |
-| [2](./part2/) | Done        | 20/20     |
-| [3](./part3/) | Done        | 22/22     |
-| [4](./part4/) | Done        | 23/23     |
-| [5](./part5/) | Done        | 23/23     |
-| [6](./part6/) | Done        | 24/24     |
-| [7](./part7/) | In Progress | 8/21      |
+| [0](./part0/) |    Done     |    6/6    |
+| [1](./part1/) |    Done     |   14/14   |
+| [2](./part2/) |    Done     |   20/20   |
+| [3](./part3/) |    Done     |   22/22   |
+| [4](./part4/) |    Done     |   23/23   |
+| [5](./part5/) |    Done     |   23/23   |
+| [6](./part6/) |    Done     |   24/24   |
+| [7](./part7/) | In Progress |   9/21    |
 
 ## Course certificates
 
