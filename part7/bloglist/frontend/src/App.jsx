@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { showNotification } from './reducers/notificationSlice'
-import { initializeBlogs, createBlog } from './reducers/blogSlice'
+import { initializeBlogs, createBlog, likeBlog, deleteBlog } from './reducers/blogSlice'
 
 // Serivces
 import blogService from './services/blogs'
@@ -72,28 +72,11 @@ const App = () => {
   }
 
   const handleLike = async (id) => {
-    const blogToUpdate = blogs.find((b) => b.id === id)
-    if (!blogToUpdate) {
+    const blogToLike = blogs.find((b) => b.id === id)
+    if (blogToLike) {
+      dispatch(likeBlog(blogToLike))
+    } else {
       dispatch(showNotification('Blog not found', 'error', 5))
-      return
-    }
-
-    const updatedBlogData = {
-      title: blogToUpdate.title,
-      author: blogToUpdate.author,
-      url: blogToUpdate.url,
-      likes: (blogToUpdate.likes || 0) + 1,
-    }
-
-    try {
-      const returnedUpdatedBlog = await blogService.update(id, updatedBlogData)
-
-      // TEMPORARY RE-FETCH
-      dispatch(initializeBlogs())
-    } catch (exception) {
-      console.error(exception)
-      const errorMessage = exception.response?.data?.error || 'Failed to update likes'
-      dispatch(showNotification(errorMessage, 'error', 5))
     }
   }
 
@@ -105,17 +88,7 @@ const App = () => {
     }
 
     if (window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author}?`)) {
-      try {
-        await blogService.remove(id)
-        // TEMPORARY RE-FETCH
-        dispatch(initializeBlogs())
-
-        dispatch(showNotification(`Blog ${blogToDelete.title} deleted`, 'success', 5))
-      } catch (exception) {
-        console.error(exception)
-        const errorMessage = exception.response?.data?.error || 'Failed to delete blog'
-        dispatch(showNotification(errorMessage, 'error', 5))
-      }
+      dispatch(deleteBlog(blogToDelete))
     }
   }
 
@@ -146,7 +119,7 @@ const App = () => {
       </div>
 
       <h3>Bloglist</h3>
-      {blogs.map((blog) => (
+      {sortedBlogs.map((blog) => (
         <Blog key={blog.id} blog={blog} handleLike={handleLike} handleDelete={handleDelete} currentUser={user} />
       ))}
     </div>
