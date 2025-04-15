@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { showNotification } from './reducers/notificationSlice'
 
 // Serivces
 import blogService from './services/blogs'
@@ -14,7 +16,9 @@ import Togglable from './components/Togglable'
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
-  const [notification, setNotification] = useState({ message: null, type: '' })
+
+  const notification = useSelector((state) => state.notification)
+  const dispatch = useDispatch()
 
   const blogFormRef = useRef()
 
@@ -39,13 +43,6 @@ const App = () => {
     return [...blogAray].sort((a, b) => (b.likes || 0) - (a.likes || 0))
   }
 
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type })
-    setTimeout(() => {
-      setNotification({ message: null, type: '' })
-    }, 5000)
-  }
-
   const handleLogin = async (credentials) => {
     try {
       const user = await loginService.login(credentials)
@@ -56,7 +53,7 @@ const App = () => {
       setUser(user)
     } catch (exception) {
       console.error(exception)
-      showNotification('Wrong username or password', 'error')
+      dispatch(showNotification('Wrong username or password', 'error', 5))
     }
   }
 
@@ -70,24 +67,27 @@ const App = () => {
     try {
       const returnedBlog = await blogService.create(blogObject)
       setBlogs(sortBlogs(blogs.concat(returnedBlog)))
-      showNotification(
-        `A new blog ${returnedBlog.title} by ${returnedBlog.author} added`,
-        'success'
-      )
+      dispatch(showNotification(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success', 5))
 
       blogFormRef.current.toggleVisibility()
     } catch (exception) {
       console.error(exception)
-      const errorMessage =
-        exception.response?.data?.error || 'Failed to add blog'
-      showNotification(errorMessage, 'error')
+      let errorMessage = 'Failed to create blog'
+
+      if (exception.response && exception.response.status === 401) {
+        errorMessage = exception.response.data.error || 'Session expired. Please log in again.'
+        handleLogout()
+      } else if (exception.response && exception.response.data && exception.response.data.error) {
+        errorMessage = exception.response.data.error
+      }
+      dispatch(showNotification(errorMessage, 'error', 5))
     }
   }
 
   const handleLike = async (id) => {
     const blogToUpdate = blogs.find((b) => b.id === id)
     if (!blogToUpdate) {
-      showNotification('Blog not found', 'error')
+      dispatch(showNotification('Blog not found', 'error', 5))
       return
     }
 
@@ -101,40 +101,31 @@ const App = () => {
     try {
       const returnedUpdatedBlog = await blogService.update(id, updatedBlogData)
 
-      setBlogs(
-        sortBlogs(
-          blogs.map((blog) => (blog.id === id ? returnedUpdatedBlog : blog))
-        )
-      )
+      setBlogs(sortBlogs(blogs.map((blog) => (blog.id === id ? returnedUpdatedBlog : blog))))
     } catch (exception) {
       console.error(exception)
-      const errorMessage =
-        exception.response?.data?.error || 'Failed to update likes'
-      showNotification(errorMessage, 'error')
+      const errorMessage = exception.response?.data?.error || 'Failed to update likes'
+      dispatch(showNotification(errorMessage, 'error', 5))
     }
   }
 
   const handleDelete = async (id) => {
     const blogToDelete = blogs.find((b) => b.id === id)
     if (!blogToDelete) {
-      showNotification('Blog not found', 'error')
+      dispatch(showNotification('Blog not found', 'error', 5))
       return
     }
 
-    if (
-      window.confirm(
-        `Remove blog ${blogToDelete.title} by ${blogToDelete.author}?`
-      )
-    ) {
+    if (window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author}?`)) {
       try {
         await blogService.remove(id)
         setBlogs(blogs.filter((blog) => blog.id !== id))
-        showNotification(`Blog ${blogToDelete.title} deleted`, 'success')
+
+        dispatch(showNotification(`Blog ${blogToDelete.title} deleted`, 'success', 5))
       } catch (exception) {
         console.error(exception)
-        const errorMessage =
-          exception.response?.data?.error || 'Failed to delete blog'
-        showNotification(errorMessage, 'error')
+        const errorMessage = exception.response?.data?.error || 'Failed to delete blog'
+        dispatch(showNotification(errorMessage, 'error', 5))
       }
     }
   }
@@ -167,13 +158,7 @@ const App = () => {
 
       <h3>Bloglist</h3>
       {blogs.map((blog) => (
-        <Blog
-          key={blog.id}
-          blog={blog}
-          handleLike={handleLike}
-          handleDelete={handleDelete}
-          currentUser={user}
-        />
+        <Blog key={blog.id} blog={blog} handleLike={handleLike} handleDelete={handleDelete} currentUser={user} />
       ))}
     </div>
   )
