@@ -15,7 +15,8 @@ const AnecdoteForm = () => {
       showNotification(`Anecdote '${newAnecdote.content}' created`, 5)
     },
     onError: (error) => {
-      showNotification(`Anecdote creation failed: ${error.response.data.error}`, 5)
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to create anecdote'
+      showNotification(errorMessage, 5)
     }
   })
 
