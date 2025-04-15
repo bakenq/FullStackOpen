@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNotificationDispatch } from '../contexts/NotificationContext'
 
 // Serivces
 import blogService from './services/blogs'
@@ -14,7 +15,8 @@ import Togglable from './components/Togglable'
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
-  const [notification, setNotification] = useState({ message: null, type: '' })
+
+  const showNotification = useNotificationDispatch()
 
   const blogFormRef = useRef()
 
@@ -39,13 +41,6 @@ const App = () => {
     return [...blogAray].sort((a, b) => (b.likes || 0) - (a.likes || 0))
   }
 
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type })
-    setTimeout(() => {
-      setNotification({ message: null, type: '' })
-    }, 5000)
-  }
-
   const handleLogin = async (credentials) => {
     try {
       const user = await loginService.login(credentials)
@@ -56,7 +51,7 @@ const App = () => {
       setUser(user)
     } catch (exception) {
       console.error(exception)
-      showNotification('Wrong username or password', 'error')
+      showNotification('Wrong username or password', 'error', 5)
     }
   }
 
@@ -70,17 +65,13 @@ const App = () => {
     try {
       const returnedBlog = await blogService.create(blogObject)
       setBlogs(sortBlogs(blogs.concat(returnedBlog)))
-      showNotification(
-        `A new blog ${returnedBlog.title} by ${returnedBlog.author} added`,
-        'success'
-      )
+      showNotification(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success', 5)
 
       blogFormRef.current.toggleVisibility()
     } catch (exception) {
       console.error(exception)
-      const errorMessage =
-        exception.response?.data?.error || 'Failed to add blog'
-      showNotification(errorMessage, 'error')
+      const errorMessage = exception.response?.data?.error || 'Failed to add blog'
+      showNotification(errorMessage, 'error', 5)
     }
   }
 
@@ -101,15 +92,10 @@ const App = () => {
     try {
       const returnedUpdatedBlog = await blogService.update(id, updatedBlogData)
 
-      setBlogs(
-        sortBlogs(
-          blogs.map((blog) => (blog.id === id ? returnedUpdatedBlog : blog))
-        )
-      )
+      setBlogs(sortBlogs(blogs.map((blog) => (blog.id === id ? returnedUpdatedBlog : blog))))
     } catch (exception) {
       console.error(exception)
-      const errorMessage =
-        exception.response?.data?.error || 'Failed to update likes'
+      const errorMessage = exception.response?.data?.error || 'Failed to update likes'
       showNotification(errorMessage, 'error')
     }
   }
@@ -121,19 +107,14 @@ const App = () => {
       return
     }
 
-    if (
-      window.confirm(
-        `Remove blog ${blogToDelete.title} by ${blogToDelete.author}?`
-      )
-    ) {
+    if (window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author}?`)) {
       try {
         await blogService.remove(id)
         setBlogs(blogs.filter((blog) => blog.id !== id))
         showNotification(`Blog ${blogToDelete.title} deleted`, 'success')
       } catch (exception) {
         console.error(exception)
-        const errorMessage =
-          exception.response?.data?.error || 'Failed to delete blog'
+        const errorMessage = exception.response?.data?.error || 'Failed to delete blog'
         showNotification(errorMessage, 'error')
       }
     }
@@ -143,7 +124,7 @@ const App = () => {
     return (
       <div>
         <h2>Log in to application</h2>
-        <Notification message={notification.message} type={notification.type} />
+        <Notification />
         <LoginForm handleLoginAttempt={handleLogin} />
       </div>
     )
@@ -153,7 +134,7 @@ const App = () => {
   return (
     <div>
       <h2>Blogs</h2>
-      <Notification message={notification.message} type={notification.type} />
+      <Notification />
       <div>
         <p>
           {user.name} logged in
@@ -167,13 +148,7 @@ const App = () => {
 
       <h3>Bloglist</h3>
       {blogs.map((blog) => (
-        <Blog
-          key={blog.id}
-          blog={blog}
-          handleLike={handleLike}
-          handleDelete={handleDelete}
-          currentUser={user}
-        />
+        <Blog key={blog.id} blog={blog} handleLike={handleLike} handleDelete={handleDelete} currentUser={user} />
       ))}
     </div>
   )

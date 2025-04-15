@@ -1,8 +1,9 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import { useNotificationValue } from '../../contexts/NotificationContext'
 
-const Notification = ({ message, type }) => {
-  if (message === null || message === '') {
+const Notification = () => {
+  const notification = useNotificationValue()
+
+  if (notification.message === null || notification.message === '') {
     return null
   }
 
@@ -17,20 +18,15 @@ const Notification = ({ message, type }) => {
 
   const notificationStyle = {
     ...baseStyle,
-    color: type === 'error' ? 'red' : 'green',
-    borderColor: type === 'error' ? 'red' : 'green',
+    color: notification.type === 'error' ? 'red' : 'green',
+    borderColor: notification.type === 'error' ? 'red' : 'green',
   }
 
   return (
-    <div style={notificationStyle} data-testid='notification'>
-      {message}
+    <div style={notificationStyle} data-testid="notification">
+      {notification.message}
     </div>
   )
-}
-
-Notification.propTypes = {
-  message: PropTypes.string,
-  type: PropTypes.string
 }
 
 export default Notification
