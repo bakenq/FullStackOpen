@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { use, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotificationDispatch } from '../contexts/NotificationContext'
 import { useUserValue, useUserDispatch } from '../contexts/UserContext'
@@ -14,7 +14,8 @@ import LoginForm from './components/LoginForm'
 import BlogForm from './components/BlogForm'
 import Notification from './components/Notification'
 import Togglable from './components/Togglable'
-import UsersView from './components/UserView'
+import UsersView from './components/UsersView'
+import UserView from './components/UserView'
 
 const Navigation = ({ user, handleLogut }) => {
   const padding = { padding: 5 }
@@ -117,14 +118,23 @@ const App = () => {
     if (loggedUserJSON) {
       try {
         const userFromStorage = JSON.parse(loggedUserJSON)
-        userDispatch({ type: 'LOGIN', payload: userFromStorage })
-        blogService.setToken(user.token)
+
+        if (userFromStorage && typeof userFromStorage === 'object' && userFromStorage.token) {
+          userDispatch({ type: 'LOGIN', payload: userFromStorage })
+          blogService.setToken(userFromStorage.token)
+        } else {
+          console.warn('Parsed user from storage was invalid', userFromStorage)
+          window.localStorage.removeItem('loggedBlogappUser')
+          userDispatch({ type: 'LOGOUT' })
+        }
       } catch (error) {
         console.error('Error parsing user data from localStorage:', error)
         window.localStorage.removeItem('loggedBlogappUser')
+        userDispatch({ type: 'LOGOUT' })
       }
     } else {
       console.log('No user found in localStorage')
+      userDispatch({ type: 'LOGOUT' })
     }
   }, [])
 
@@ -229,6 +239,7 @@ const App = () => {
         />
 
         <Route path="/users" element={<UsersView />} />
+        <Route path="/users/:id" element={<UserView />} />
       </Routes>
     </div>
   )
