@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotificationDispatch } from '../contexts/NotificationContext'
 
 // Serivces
@@ -13,20 +14,76 @@ import Notification from './components/Notification'
 import Togglable from './components/Togglable'
 
 const App = () => {
-  const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
 
   const showNotification = useNotificationDispatch()
-
   const blogFormRef = useRef()
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    if (user) {
-      blogService.getAll().then((blogs) => setBlogs(sortBlogs(blogs)))
-    } else {
-      setBlogs([])
-    }
-  }, [user])
+  const {
+    data: blogsData,
+    isLoading: isLoadingBlogs,
+    isError: isErrorBlogs,
+    error: blogsError,
+  } = useQuery({
+    queryKey: ['blogs'],
+    queryFn: () => blogService.getAll(),
+    enabled: !!user,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  })
+
+  const blogs = blogsData || []
+
+  const newBlogMutation = useMutation({
+    mutationFn: blogService.create,
+    onSuccess: (returnedBlog) => {
+      const currentBlogs = queryClient.getQueryData(['blogs']) ?? []
+      queryClient.setQueryData(['blogs'], [...currentBlogs, returnedBlog])
+
+      showNotification(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success', 5)
+      blogFormRef.current.toggleVisibility()
+    },
+    onError: (exception) => {
+      console.error('Blog creation failed:', exception)
+      const errorMessage = exception.response?.data?.error || 'Failed to add blog'
+      showNotification(errorMessage, 'error', 5)
+    },
+  })
+
+  const updateBlogMutation = useMutation({
+    mutationFn: ({ id, updatedBlogData }) => blogService.update(id, updatedBlogData),
+    onSuccess: (returnedUpdatedBlog) => {
+      const currentBlogs = queryClient.getQueryData(['blogs']) ?? []
+      queryClient.setQueryData(
+        ['blogs'],
+        currentBlogs.map((blog) => (blog.id === returnedUpdatedBlog.id ? returnedUpdatedBlog : blog))
+      )
+    },
+    onError: (exception) => {
+      console.error('Blog update (like) failed:', exception)
+      const errrorMessage = exception.response?.data?.error || 'Failed to update blog'
+      showNotification(errrorMessage, 'error', 5)
+    },
+  })
+
+  const deleteBlogMutation = useMutation({
+    mutationFn: blogService.remove,
+    onSuccess: (data, variables) => {
+      const deletedBlogId = variables
+      const currentBlogs = queryClient.getQueryData(['blogs']) ?? []
+      queryClient.setQueryData(
+        ['blogs'],
+        currentBlogs.filter((blog) => blog.id !== deletedBlogId)
+      )
+      showNotification('Blog deleted successfully', 'success', 5)
+    },
+    onError: (exception) => {
+      console.error('Blog deletion failed:', exception)
+      const errorMessage = exception.response?.data?.error || 'Failed to delete blog'
+      showNotification(errorMessage, 'error', 5)
+    },
+  })
 
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
@@ -40,6 +97,7 @@ const App = () => {
   const sortBlogs = (blogAray) => {
     return [...blogAray].sort((a, b) => (b.likes || 0) - (a.likes || 0))
   }
+  const sortedBlogs = sortBlogs(blogs)
 
   const handleLogin = async (credentials) => {
     try {
@@ -62,61 +120,33 @@ const App = () => {
   }
 
   const addBlog = async (blogObject) => {
-    try {
-      const returnedBlog = await blogService.create(blogObject)
-      setBlogs(sortBlogs(blogs.concat(returnedBlog)))
-      showNotification(`A new blog ${returnedBlog.title} by ${returnedBlog.author} added`, 'success', 5)
-
-      blogFormRef.current.toggleVisibility()
-    } catch (exception) {
-      console.error(exception)
-      const errorMessage = exception.response?.data?.error || 'Failed to add blog'
-      showNotification(errorMessage, 'error', 5)
-    }
+    newBlogMutation.mutate(blogObject)
   }
 
   const handleLike = async (id) => {
-    const blogToUpdate = blogs.find((b) => b.id === id)
-    if (!blogToUpdate) {
-      showNotification('Blog not found', 'error')
+    const blogToLike = blogs.find((b) => b.id === id)
+    if (!blogToLike) {
+      showNotification('Blog not found', 'error', 5)
       return
     }
 
     const updatedBlogData = {
-      title: blogToUpdate.title,
-      author: blogToUpdate.author,
-      url: blogToUpdate.url,
-      likes: (blogToUpdate.likes || 0) + 1,
+      ...blogToLike,
+      likes: (blogToLike.likes || 0) + 1,
+      user: blogToLike.user.id,
     }
 
-    try {
-      const returnedUpdatedBlog = await blogService.update(id, updatedBlogData)
-
-      setBlogs(sortBlogs(blogs.map((blog) => (blog.id === id ? returnedUpdatedBlog : blog))))
-    } catch (exception) {
-      console.error(exception)
-      const errorMessage = exception.response?.data?.error || 'Failed to update likes'
-      showNotification(errorMessage, 'error')
-    }
+    updateBlogMutation.mutate({ id, updatedBlogData })
   }
 
   const handleDelete = async (id) => {
     const blogToDelete = blogs.find((b) => b.id === id)
     if (!blogToDelete) {
-      showNotification('Blog not found', 'error')
+      showNotification('Blog not found', 'error', 5)
       return
     }
-
-    if (window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author}?`)) {
-      try {
-        await blogService.remove(id)
-        setBlogs(blogs.filter((blog) => blog.id !== id))
-        showNotification(`Blog ${blogToDelete.title} deleted`, 'success')
-      } catch (exception) {
-        console.error(exception)
-        const errorMessage = exception.response?.data?.error || 'Failed to delete blog'
-        showNotification(errorMessage, 'error')
-      }
+    if (window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author}`)) {
+      deleteBlogMutation.mutate(id)
     }
   }
 
@@ -147,9 +177,13 @@ const App = () => {
       </div>
 
       <h3>Bloglist</h3>
-      {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} handleLike={handleLike} handleDelete={handleDelete} currentUser={user} />
-      ))}
+      {isLoadingBlogs && <div>Loading blogs...</div>}
+      {isErrorBlogs && <div>Error: {blogsError?.message || 'Unknown Error'}</div>}
+      {!isLoadingBlogs &&
+        !isErrorBlogs &&
+        sortedBlogs.map((blog) => (
+          <Blog key={blog.id} blog={blog} handleLike={handleLike} handleDelete={handleDelete} currentUser={user} />
+        ))}
     </div>
   )
 }
