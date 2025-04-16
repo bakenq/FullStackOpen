@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotificationDispatch } from '../contexts/NotificationContext'
+import { useUserValue, useUserDispatch } from '../contexts/UserContext'
 
 // Serivces
 import blogService from './services/blogs'
@@ -14,7 +15,8 @@ import Notification from './components/Notification'
 import Togglable from './components/Togglable'
 
 const App = () => {
-  const [user, setUser] = useState(null)
+  const user = useUserValue()
+  const userDispatch = useUserDispatch()
 
   const showNotification = useNotificationDispatch()
   const blogFormRef = useRef()
@@ -88,9 +90,16 @@ const App = () => {
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
     if (loggedUserJSON) {
-      const user = JSON.parse(loggedUserJSON)
-      setUser(user)
-      blogService.setToken(user.token)
+      try {
+        const userFromStorage = JSON.parse(loggedUserJSON)
+        userDispatch({ type: 'LOGIN', payload: userFromStorage })
+        blogService.setToken(user.token)
+      } catch (error) {
+        console.error('Error parsing user data from localStorage:', error)
+        window.localStorage.removeItem('loggedBlogappUser')
+      }
+    } else {
+      console.log('No user found in localStorage')
     }
   }, [])
 
@@ -102,11 +111,9 @@ const App = () => {
   const handleLogin = async (credentials) => {
     try {
       const user = await loginService.login(credentials)
-
       window.localStorage.setItem('loggedBlogappUser', JSON.stringify(user))
-
       blogService.setToken(user.token)
-      setUser(user)
+      userDispatch({ type: 'LOGIN', payload: user })
     } catch (exception) {
       console.error(exception)
       showNotification('Wrong username or password', 'error', 5)
@@ -115,8 +122,9 @@ const App = () => {
 
   const handleLogout = () => {
     window.localStorage.removeItem('loggedBlogappUser')
-    setUser(null)
     blogService.setToken(null)
+    userDispatch({ type: 'LOGOUT' })
+    queryClient.removeQueries({ queryKey: ['blogs'], exact: true })
   }
 
   const addBlog = async (blogObject) => {
