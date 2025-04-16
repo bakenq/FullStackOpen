@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotificationDispatch } from '../contexts/NotificationContext'
 import { useUserValue, useUserDispatch } from '../contexts/UserContext'
+import { Routes, Route, Link } from 'react-router-dom'
 
 // Serivces
 import blogService from './services/blogs'
@@ -13,6 +14,30 @@ import LoginForm from './components/LoginForm'
 import BlogForm from './components/BlogForm'
 import Notification from './components/Notification'
 import Togglable from './components/Togglable'
+import UsersView from './components/UserView'
+
+const Navigation = ({ user, handleLogut }) => {
+  const padding = { padding: 5 }
+
+  return (
+    <div style={{ background: '#eee', padding: 5, marginBottom: 10 }}>
+      <Link style={padding} to="/">
+        Blogs
+      </Link>
+      <Link style={padding} to="/users">
+        Users
+      </Link>
+      {user && (
+        <span style={padding}>
+          {user.name} logged in
+          <button style={padding} onClick={handleLogut}>
+            Logout
+          </button>
+        </span>
+      )}
+    </div>
+  )
+}
 
 const App = () => {
   const user = useUserValue()
@@ -171,27 +196,40 @@ const App = () => {
   // Logged-in view
   return (
     <div>
+      <Navigation user={user} handleLogut={handleLogout} />
+
       <h2>Blogs</h2>
       <Notification />
-      <div>
-        <p>
-          {user.name} logged in
-          <button onClick={handleLogout}>logout</button>
-        </p>
 
-        <Togglable buttonLabel="Create New Blog" forwardedRef={blogFormRef}>
-          <BlogForm createBlog={addBlog} />
-        </Togglable>
-      </div>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <div>
+              <Togglable buttonLabel="Create New Blog" forwardedRef={blogFormRef}>
+                <BlogForm createBlog={addBlog} />
+              </Togglable>
 
-      <h3>Bloglist</h3>
-      {isLoadingBlogs && <div>Loading blogs...</div>}
-      {isErrorBlogs && <div>Error: {blogsError?.message || 'Unknown Error'}</div>}
-      {!isLoadingBlogs &&
-        !isErrorBlogs &&
-        sortedBlogs.map((blog) => (
-          <Blog key={blog.id} blog={blog} handleLike={handleLike} handleDelete={handleDelete} currentUser={user} />
-        ))}
+              <h3>Bloglist</h3>
+              {isLoadingBlogs && <div>Loading blogs...</div>}
+              {isErrorBlogs && <div>Error: {blogsError?.message || 'Unknown Error'}</div>}
+              {!isLoadingBlogs &&
+                !isErrorBlogs &&
+                sortedBlogs.map((blog) => (
+                  <Blog
+                    key={blog.id}
+                    blog={blog}
+                    handleLike={handleLike}
+                    handleDelete={handleDelete}
+                    currentUser={user}
+                  />
+                ))}
+            </div>
+          }
+        />
+
+        <Route path="/users" element={<UsersView />} />
+      </Routes>
     </div>
   )
 }
