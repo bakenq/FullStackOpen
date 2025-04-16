@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { BrowserRouter as Router } from 'react-router-dom'
 import App from './App'
-import { NotificationContextProvider } from '../contexts/NotificationContext'
-import { UserContextProvider } from '../contexts/UserContext'
+import { NotificationContextProvider } from './contexts/NotificationContext'
+import { UserContextProvider } from './contexts/UserContext'
 
 const queryClient = new QueryClient()
 

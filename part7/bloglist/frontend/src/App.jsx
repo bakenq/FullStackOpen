@@ -1,7 +1,7 @@
-import { use, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNotificationDispatch } from '../contexts/NotificationContext'
-import { useUserValue, useUserDispatch } from '../contexts/UserContext'
+import { useNotificationDispatch } from './contexts/NotificationContext'
+import { useUserValue, useUserDispatch } from './contexts/UserContext'
 import { Routes, Route, Link } from 'react-router-dom'
 
 // Serivces
@@ -16,6 +16,7 @@ import Notification from './components/Notification'
 import Togglable from './components/Togglable'
 import UsersView from './components/UsersView'
 import UserView from './components/UserView'
+import BlogView from './components/BlogView'
 
 const Navigation = ({ user, handleLogut }) => {
   const padding = { padding: 5 }
@@ -223,23 +224,14 @@ const App = () => {
               <h3>Bloglist</h3>
               {isLoadingBlogs && <div>Loading blogs...</div>}
               {isErrorBlogs && <div>Error: {blogsError?.message || 'Unknown Error'}</div>}
-              {!isLoadingBlogs &&
-                !isErrorBlogs &&
-                sortedBlogs.map((blog) => (
-                  <Blog
-                    key={blog.id}
-                    blog={blog}
-                    handleLike={handleLike}
-                    handleDelete={handleDelete}
-                    currentUser={user}
-                  />
-                ))}
+              {!isLoadingBlogs && !isErrorBlogs && sortedBlogs.map((blog) => <Blog key={blog.id} blog={blog} />)}
             </div>
           }
         />
 
         <Route path="/users" element={<UsersView />} />
         <Route path="/users/:id" element={<UserView />} />
+        <Route path="/blogs/:id" element={<BlogView />} />
       </Routes>
     </div>
   )
