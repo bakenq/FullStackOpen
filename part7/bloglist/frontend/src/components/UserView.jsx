@@ -2,6 +2,14 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import userService from '../services/users'
 
+// MUI Imports
+import Typography from '@mui/material/Typography'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
+import Box from '@mui/material/Box'
+import Alert from '@mui/material/Alert'
+
 const UserView = () => {
   const { id: userId } = useParams()
 
@@ -27,23 +35,31 @@ const UserView = () => {
   }
 
   if (!user) {
-    return <div>User not found.</div>
+    return <Alert severity="warning">User not found.</Alert>
   }
 
   return (
-    <div>
-      <h2>{user.name || user.username}</h2>
-      <h3>Added Blogs</h3>
+    <Box sx={{ my: 2 }}>
+      <Typography variant="h5" component="h2" gutterBottom>
+        {user.name || user.username}
+      </Typography>
+      <Typography variant="h6" component="h3" sx={{ mt: 3 }}>
+        Added Blogs
+      </Typography>
       {user.blogs && user.blogs.length > 0 ? (
-        <ul>
+        <List dense>
           {user.blogs.map((blog) => (
-            <li key={blog.id}>{blog.title}</li>
+            <ListItem key={blog.id}>
+              <ListItemText primary={blog.title} />
+            </ListItem>
           ))}
-        </ul>
+        </List>
       ) : (
-        <p>This user has not added any blogs yet.</p>
+        <Typography variant="body1" sx={{ mt: 1 }}>
+          This user has not added any blogs yet.
+        </Typography>
       )}
-    </div>
+    </Box>
   )
 }
 

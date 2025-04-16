@@ -2,13 +2,14 @@ import { useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotificationDispatch } from './contexts/NotificationContext'
 import { useUserValue, useUserDispatch } from './contexts/UserContext'
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 
 // Serivces
 import blogService from './services/blogs'
 import loginService from './services/login'
 
 //Components
+import Navigation from './components/Navigation'
 import Blog from './components/Blog'
 import LoginForm from './components/LoginForm'
 import BlogForm from './components/BlogForm'
@@ -18,28 +19,10 @@ import UsersView from './components/UsersView'
 import UserView from './components/UserView'
 import BlogView from './components/BlogView'
 
-const Navigation = ({ user, handleLogut }) => {
-  const padding = { padding: 5 }
-
-  return (
-    <div style={{ background: '#eee', padding: 5, marginBottom: 10 }}>
-      <Link style={padding} to="/">
-        Blogs
-      </Link>
-      <Link style={padding} to="/users">
-        Users
-      </Link>
-      {user && (
-        <span style={padding}>
-          {user.name} logged in
-          <button style={padding} onClick={handleLogut}>
-            Logout
-          </button>
-        </span>
-      )}
-    </div>
-  )
-}
+// MUI Imports
+import Container from '@mui/material/Container'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
 const App = () => {
   const user = useUserValue()
@@ -194,46 +177,56 @@ const App = () => {
     }
   }
 
-  if (user === null) {
-    return (
-      <div>
-        <h2>Log in to application</h2>
-        <Notification />
-        <LoginForm handleLoginAttempt={handleLogin} />
-      </div>
-    )
-  }
-
-  // Logged-in view
   return (
-    <div>
-      <Navigation user={user} handleLogut={handleLogout} />
-
-      <h2>Blogs</h2>
+    <Container>
       <Notification />
+      {user && <Navigation user={user} handleLogut={handleLogout} />}
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <div>
-              <Togglable buttonLabel="Create New Blog" forwardedRef={blogFormRef}>
-                <BlogForm createBlog={addBlog} />
-              </Togglable>
+      <Box sx={{ my: 2 }}>
+        {/* Login View */}
+        {user === null && (
+          <>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Log in to application
+            </Typography>
+            <LoginForm handleLoginAttempt={handleLogin} />
+          </>
+        )}
 
-              <h3>Bloglist</h3>
-              {isLoadingBlogs && <div>Loading blogs...</div>}
-              {isErrorBlogs && <div>Error: {blogsError?.message || 'Unknown Error'}</div>}
-              {!isLoadingBlogs && !isErrorBlogs && sortedBlogs.map((blog) => <Blog key={blog.id} blog={blog} />)}
-            </div>
-          }
-        />
+        {/* Logged in View */}
+        {user !== null && (
+          <Routes>
+            {/* Blog List Route */}
+            <Route
+              path="/"
+              element={
+                <>
+                  <Typography variant="h4" component="h1" gutterBottom>
+                    Blog App
+                  </Typography>
 
-        <Route path="/users" element={<UsersView />} />
-        <Route path="/users/:id" element={<UserView />} />
-        <Route path="/blogs/:id" element={<BlogView />} />
-      </Routes>
-    </div>
+                  <Togglable buttonLabel="Create New Blog" forwardedRef={blogFormRef}>
+                    <BlogForm createBlog={addBlog} />
+                  </Togglable>
+
+                  <Typography variant="h4" component="h1" gutterBottom>
+                    Bloglist
+                  </Typography>
+
+                  {isLoadingBlogs && <div>Loading blogs...</div>}
+                  {isErrorBlogs && <div>Error: {blogsError?.message || 'Unknown Error'}</div>}
+                  {!isLoadingBlogs && !isErrorBlogs && sortedBlogs.map((blog) => <Blog key={blog.id} blog={blog} />)}
+                </>
+              }
+            />
+
+            <Route path="/users" element={<UsersView />} />
+            <Route path="/users/:id" element={<UserView />} />
+            <Route path="/blogs/:id" element={<BlogView />} />
+          </Routes>
+        )}
+      </Box>
+    </Container>
   )
 }
 

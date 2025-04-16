@@ -4,6 +4,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import blogService from '../services/blogs'
 import { useNotificationDispatch } from '../contexts/NotificationContext'
 
+// MUI Imports
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
+import Link from '@mui/material/Link'
+import Button from '@mui/material/Button'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import TextField from '@mui/material/TextField'
+import Alert from '@mui/material/Alert'
+import Divider from '@mui/material/Divider'
+
 const BlogView = () => {
   const { id: blogId } = useParams()
   const queryClient = useQueryClient()
@@ -66,7 +77,7 @@ const BlogView = () => {
   }
 
   if (!blog) {
-    return <div>Blog not found.</div>
+    return <Alert severity="warning">Blog not found.</Alert>
   }
 
   const handleLikeClick = () => {
@@ -91,47 +102,60 @@ const BlogView = () => {
   }
 
   return (
-    <div>
-      <h2>
-        {blog.title} by {blog.author}
-      </h2>
-      <div>
-        <a href={blog.url} target="_blank" rel="noopener noreferrer">
+    <Box sx={{ my: 2 }}>
+      <Typography variant="h5" component="h1" gutterBottom>
+        {blog.title}
+      </Typography>
+      <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+        by {blog.author}
+      </Typography>
+      <Box sx={{ my: 2 }}>
+        <Link href={blog.url} target="_blank" rel="noopener noreferrer">
           {blog.url}
-        </a>
-      </div>
-      <div>
-        {blog.likes || 0} likes
-        <button onClick={handleLikeClick} style={{ marginLeft: 5 }}>
+        </Link>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
+        <Typography variant="body1" sx={{ mr: 1 }}>
+          {blog.likes || 0} likes
+        </Typography>
+        <Button variant="outlined" size="small" onClick={handleLikeClick}>
           Like
-        </button>
-      </div>
-      <div>Added by {blog.user ? blog.user.name || blog.user.username : 'Unknown User'}</div>
-
-      <div>
-        <h3>Comments</h3>
-
-        <form onSubmit={handleAddComment}>
-          <input
-            type="text"
-            value={comment}
-            onChange={(event) => setComment(event.target.value)}
-            placeholder="Add a comment"
-          />
-          <button type="submit">Add Comment</button>
-        </form>
-
-        {blog.comments && blog.comments.length > 0 ? (
-          <ul>
-            {blog.comments.map((comment, index) => (
-              <li key={index}>{comment}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>No comments yet.</p>
-        )}
-      </div>
-    </div>
+        </Button>
+      </Box>
+      <Typography variant="body2" color="text.secondary">
+        Added by {blog.user ? blog.user.name || blog.user.username : 'Unknown User'}
+      </Typography>
+      <Divider sx={{ my: 3 }} />
+      <Typography variant="h6" component="h3" gutterBottom>
+        Comments
+      </Typography>
+      <Box component="form" onSubmit={handleAddComment} sx={{ display: 'flex', gap: 1, mb: 2 }}>
+        <TextField
+          label="Add comment"
+          size="small"
+          variant="outlined"
+          value={comment}
+          onChange={({ target }) => setComment(target.value)}
+          fullWidth
+        />
+        <Button type="submit" variant="contained">
+          Add
+        </Button>
+      </Box>
+      {blog.comments && blog.comments.length > 0 ? (
+        <List dense>
+          {blog.comments.map((commentText, index) => (
+            <ListItem key={index} disableGutters>
+              <Typography variant="body2">{commentText}</Typography>
+            </ListItem>
+          ))}
+        </List>
+      ) : (
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          No comments yet.
+        </Typography>
+      )}
+    </Box>
   )
 }
 

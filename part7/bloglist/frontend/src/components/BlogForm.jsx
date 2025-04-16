@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import PropTypes from 'prop-types'
 
+// MUI imports
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+
 const BlogForm = ({ createBlog }) => {
   const [newTitle, setNewTitle] = useState('')
   const [newAuthor, setNewAuthor] = useState('')
@@ -19,45 +25,45 @@ const BlogForm = ({ createBlog }) => {
   }
 
   return (
-    <div>
-      <h2>Create new</h2>
-      <form onSubmit={handleCreateBlog}>
-        <div>
-          title:
-          <input
-            type='text'
-            value={newTitle}
-            name='Title'
-            onChange={({ target }) => setNewTitle(target.value)}
-            placeholder="Enter title here"
-          />
-        </div>
-        <div>
-          author:
-          <input
-            type='text'
-            value={newAuthor}
-            name='Author'
-            onChange={({ target }) => setNewAuthor(target.value)}
-            placeholder='Enter author here'
-          />
-        </div>
-        <div>
-          url:
-          <input
-            type='text'
-            value={newUrl}
-            name='Url'
-            onChange={({ target }) => setNewUrl(target.value)}
-            placeholder='Enter URL here'
-          />
-        </div>
-        <button type='submit'>create</button>
-      </form>
-    </div>
+    <Box sx={{ my: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        Create New Blog
+      </Typography>
+      <Box component="form" onSubmit={handleCreateBlog}>
+        <TextField
+          label="Title"
+          value={newTitle}
+          onChange={({ target }) => setNewTitle(target.value)}
+          fullWidth
+          required
+          margin="dense"
+          placeholder="Enter title here"
+        />
+        <TextField
+          label="Author"
+          value={newAuthor}
+          onChange={({ target }) => setNewAuthor(target.value)}
+          fullWidth
+          margin="dense"
+          placeholder="Enter author here"
+        />
+        <TextField
+          label="URL"
+          value={newUrl}
+          onChange={({ target }) => setNewUrl(target.value)}
+          fullWidth
+          required
+          margin="dense"
+          placeholder="Enter URL here"
+          type="url" // Use type="url" for better semantics/validation
+        />
+        <Button type="submit" variant="contained" sx={{ mt: 1 }}>
+          Create
+        </Button>
+      </Box>
+    </Box>
   )
 }
-
 
 BlogForm.propTypes = {
   createBlog: PropTypes.func.isRequired,

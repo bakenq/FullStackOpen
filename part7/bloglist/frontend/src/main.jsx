@@ -6,6 +6,8 @@ import App from './App'
 import { NotificationContextProvider } from './contexts/NotificationContext'
 import { UserContextProvider } from './contexts/UserContext'
 
+import CssBaseline from '@mui/material/CssBaseline'
+
 const queryClient = new QueryClient()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -13,6 +15,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Router>
       <UserContextProvider>
         <NotificationContextProvider>
+          <CssBaseline />
           <App />
         </NotificationContextProvider>
       </UserContextProvider>

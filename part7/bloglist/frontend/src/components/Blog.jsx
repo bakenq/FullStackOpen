@@ -1,23 +1,20 @@
-import { Link } from 'react-router-dom'
+import { Link as RouterLink } from 'react-router-dom'
 import PropTypes from 'prop-types'
 
-const Blog = ({ blog }) => {
-  const blogStyle = {
-    paddingTop: 10,
-    paddingLeft: 2,
-    border: 'solid',
-    borderWidth: 1,
-    marginBottom: 5,
-  }
+// MUI Imports
+import Paper from '@mui/material/Paper'
+import Link from '@mui/material/Link'
+import Typography from '@mui/material/Typography'
 
+const Blog = ({ blog }) => {
   return (
-    <>
-      <div style={blogStyle} className="blog">
-        <Link to={`/blogs/${blog.id}`}>
-          {blog.title} {blog.author}
-        </Link>
-      </div>
-    </>
+    <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
+      <Link component={RouterLink} to={`/blogs/${blog.id}`} underline="hover">
+        <Typography variant="body1">
+          {blog.title} - {blog.author}
+        </Typography>
+      </Link>
+    </Paper>
   )
 }
 

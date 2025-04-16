@@ -1,31 +1,20 @@
 import { useNotificationValue } from '../contexts/NotificationContext'
+import Alert from '@mui/material/Alert'
+import Snackbar from '@mui/material/Snackbar'
 
 const Notification = () => {
   const notification = useNotificationValue()
 
-  if (notification.message === null || notification.message === '') {
-    return null
-  }
+  const open = notification.message !== null && notification.message !== ''
 
-  const baseStyle = {
-    background: 'lightgrey',
-    fontSize: '20px',
-    borderStyle: 'solid',
-    borderRadius: '5px',
-    padding: '10px',
-    marginBottom: '15px',
-  }
-
-  const notificationStyle = {
-    ...baseStyle,
-    color: notification.type === 'error' ? 'red' : 'green',
-    borderColor: notification.type === 'error' ? 'red' : 'green',
-  }
+  if (!open) return null
 
   return (
-    <div style={notificationStyle} data-testid="notification">
-      {notification.message}
-    </div>
+    <Snackbar open={open} autoHideDuration={null} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Alert severity={notification.type === 'error' ? 'error' : 'success'} variant="filled" sx={{ wdith: '100%' }}>
+        {notification.message}
+      </Alert>
+    </Snackbar>
   )
 }
 
