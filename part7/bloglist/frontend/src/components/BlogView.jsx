@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import blogService from '../services/blogs'
@@ -7,6 +8,7 @@ const BlogView = () => {
   const { id: blogId } = useParams()
   const queryClient = useQueryClient()
   const showNotification = useNotificationDispatch()
+  const [comment, setComment] = useState('')
 
   const {
     data: blogs,
@@ -35,6 +37,24 @@ const BlogView = () => {
     },
   })
 
+  const addCommentMutation = useMutation({
+    mutationFn: ({ id, commentText }) => blogService.addComment(id, commentText),
+    onSuccess: (returnedUpdatedBlog) => {
+      const currentBlogs = queryClient.getQueryData(['blogs']) ?? []
+      queryClient.setQueryData(
+        ['blogs'],
+        currentBlogs.map((blog) => (blog.id === returnedUpdatedBlog.id ? returnedUpdatedBlog : blog))
+      )
+      setComment('')
+      showNotification('Comment added successfully', 'success', 3)
+    },
+    onError: (exception) => {
+      console.error('Failed to add comment:', exception)
+      const errorMessage = exception.response?.data?.error || 'Failed to add comment'
+      showNotification(errorMessage, 'error', 5)
+    },
+  })
+
   const blog = blogs?.find((b) => b.id === blogId)
 
   if (isLoading) {
@@ -60,6 +80,16 @@ const BlogView = () => {
     updateBlogMutation.mutate({ id: blog.id, updatedBlogData })
   }
 
+  const handleAddComment = (event) => {
+    event.preventDefault()
+    if (!comment.trim()) {
+      showNotification('Comment cannot be empty', 'error')
+      return
+    }
+
+    addCommentMutation.mutate({ id: blog.id, commentText: comment })
+  }
+
   return (
     <div>
       <h2>
@@ -80,6 +110,16 @@ const BlogView = () => {
 
       <div>
         <h3>Comments</h3>
+
+        <form onSubmit={handleAddComment}>
+          <input
+            type="text"
+            value={comment}
+            onChange={(event) => setComment(event.target.value)}
+            placeholder="Add a comment"
+          />
+          <button type="submit">Add Comment</button>
+        </form>
 
         {blog.comments && blog.comments.length > 0 ? (
           <ul>
