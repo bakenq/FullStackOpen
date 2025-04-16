@@ -2,16 +2,16 @@ const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
 const { userExtractor } = require('../utils/middleware')
 
-
 blogsRouter.get('/', async (request, response, next) => {
   try {
-    const blogs = await Blog
-      .find({})
-      .populate('user', { username: 1, name: 1, id: 1 })
+    const blogs = await Blog.find({}).populate('user', {
+      username: 1,
+      name: 1,
+      id: 1,
+    })
 
     response.json(blogs)
-  }
-  catch (error) {
+  } catch (error) {
     next(error)
   }
 })
@@ -42,7 +42,11 @@ blogsRouter.post('/', userExtractor, async (request, response, next) => {
     user.blogs = user.blogs.concat(savedBlog._id)
     await user.save()
 
-    const populatedBlog = await Blog.findById(savedBlog.id).populate('user', { username: 1, name: 1, id: 1 })
+    const populatedBlog = await Blog.findById(savedBlog.id).populate('user', {
+      username: 1,
+      name: 1,
+      id: 1,
+    })
 
     response.status(201).json(populatedBlog)
   } catch (error) {
@@ -66,12 +70,14 @@ blogsRouter.delete('/:id', userExtractor, async (request, response, next) => {
     }
 
     if (!blog.user || blog.user.toString() !== user._id.toString()) {
-      return response.status(403).json({ error: 'User not authorized to delete this blog' })
+      return response
+        .status(403)
+        .json({ error: 'User not authorized to delete this blog' })
     }
 
     await Blog.findByIdAndDelete(idToDelete)
 
-    user.blogs = user.blogs.filter(blogId => blogId.toString() !== idToDelete)
+    user.blogs = user.blogs.filter((blogId) => blogId.toString() !== idToDelete)
     await user.save()
 
     response.status(204).end()
@@ -98,14 +104,43 @@ blogsRouter.put('/:id', async (request, response, next) => {
   const options = { new: true, runValidators: true, context: 'query' }
 
   try {
-    const updatedBlog = await Blog.findByIdAndUpdate(id, blogDataToUpdate, options)
-      .populate('user', { username: 1, name: 1, id: 1 })
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      id,
+      blogDataToUpdate,
+      options
+    ).populate('user', { username: 1, name: 1, id: 1 })
 
     if (updatedBlog) {
       response.json(updatedBlog)
     } else {
       response.status(404).json({ error: 'blog not found' })
     }
+  } catch (error) {
+    next(error)
+  }
+})
+
+blogsRouter.post('/:id/comments', async (request, response, next) => {
+  const blogId = request.params.id
+  const { comment } = request.body
+
+  if (!comment || typeof comment !== 'string' || comment.trim() === '') {
+    return response
+      .status(400)
+      .json({ error: 'Comment content is missing or invalid' })
+  }
+
+  try {
+    const blog = await Blog.findById(blogId)
+
+    if (!blog) {
+      return response.status(404).json({ error: 'Blog not found' })
+    }
+
+    blog.comments = blog.comments.concat(comment)
+    const updatedBlog = await blog.save()
+    await updatedBlog.populate('user', { username: 1, name: 1, id: 1 })
+    response.status(201).json(updatedBlog)
   } catch (error) {
     next(error)
   }
