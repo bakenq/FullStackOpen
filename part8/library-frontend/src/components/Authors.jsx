@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { ALL_AUTHORS, EDIT_AUTHOR } from "../queries";
+import Select from "react-select";
 
 const Authors = (props) => {
-  const [selectedAuthorName, setSelectedAuthorName] = useState("");
+  //const [selectedAuthorName, setSelectedAuthorName] = useState("");
+  const [selectedOption, setSelectedOption] = useState(null);
   const [bornYear, setBornYear] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
 
@@ -22,7 +24,7 @@ const Authors = (props) => {
       }, 5000);
     },
     onCompleted: () => {
-      setSelectedAuthorName("");
+      setSelectedOption("");
       setBornYear("");
       setErrorMessage(null);
     },
@@ -38,10 +40,17 @@ const Authors = (props) => {
 
   const authors = result.data.allAuthors;
 
+  const authorOptions = authors.map((author) => ({
+    value: author.name,
+    label: author.name,
+  }));
+
   const submitBirthYear = (event) => {
     event.preventDefault();
 
-    if (!selectedAuthorName) {
+    const authorName = selectedOption ? selectedOption.value : null;
+
+    if (!authorName) {
       setErrorMessage("Please select an author.");
       setTimeout(() => {
         setErrorMessage(null);
@@ -59,8 +68,12 @@ const Authors = (props) => {
     }
 
     changeBirthYear({
-      variables: { name: selectedAuthorName, setBornTo: bornInt },
+      variables: { name: authorName, setBornTo: bornInt },
     });
+  };
+
+  const handleSelectChange = (selected) => {
+    setSelectedOption(selected);
   };
 
   return (
@@ -101,20 +114,21 @@ const Authors = (props) => {
       <form onSubmit={submitBirthYear}>
         <div>
           <label htmlFor='authorSelect'>Author </label>
-          <select
+          <Select
             id='authorSelect'
-            value={selectedAuthorName}
-            onChange={({ target }) => setSelectedAuthorName(target.value)}
-          >
-            <option value='' disabled>
-              -- Select Author --
-            </option>
-            {authors.map((a) => (
-              <option key={a.id} value={a.name}>
-                {a.name}
-              </option>
-            ))}
-          </select>
+            value={selectedOption}
+            onChange={handleSelectChange}
+            options={authorOptions}
+            isClearable
+            styles={{
+              container: (base) => ({
+                ...base,
+                width: "300px",
+                display: "inline-block",
+                marginRight: "10px",
+              }),
+            }}
+          />
         </div>
         <div>
           <label htmlFor='bornInput'>Born </label>
