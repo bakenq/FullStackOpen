@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
 const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
+import { GraphQLError } from "graphql";
 
 const Author = require("./models/author");
 const Book = require("./models/book");
@@ -106,12 +107,43 @@ const resolvers = {
         author = new Author({
           name: args.author,
         });
+
         try {
           await author.save();
         } catch (error) {
           console.error("Error saving new author:", error.message);
-          throw new Error(`Error saving author: ${error.message}`);
+          if (error.name === "ValidationError") {
+            throw new GraphQLError(`Failed to save author: ${messages}`, {
+              extensions: {
+                code: "BAD_USER_INPUT",
+                invalidArgs: { author: args.author },
+                errorDetails: error.errors,
+              },
+            });
+          } else if (error.code === 11000 || error.code === 11001) {
+            const field = Object.keys(error.keyValue)[0];
+            const value = error.keyValue[field];
+            throw new GraphQLError(
+              `Author validation failed: ${field} must be unique. Value ${value} is already taken`,
+              {
+                extensions: {
+                  code: "BAD_USER_INPUT",
+                  invalidArgs: { author: args.author },
+                },
+              }
+            );
+          }
         }
+
+        throw new GraphQLError(
+          "Saving new author failed due to an unexpected error.",
+          {
+            extensions: {
+              code: "BAD_USER_INPUT",
+              invalidArgs: { author: args.author },
+            },
+          }
+        );
       }
 
       const book = new Book({ ...args, author: author._id });
@@ -120,11 +152,47 @@ const resolvers = {
         await book.save();
       } catch (error) {
         console.error("Error saving new book:", error.message);
-        throw new Error(`Error saving book: ${error.message}`);
+        if (error.name === "ValidationError") {
+          const messages = Object.values(error.errors)
+            .map((val) => val.message)
+            .join(", ");
+          throw new GraphQLError(`Failed to save book: ${messages}`, {
+            extensions: {
+              code: "BAD_USER_INPUT",
+              invalidArgs: args,
+              errorDetails: error.errors,
+            },
+          });
+        } else if (error.code === 11000 || error.code === 11001) {
+          const field = Object.keys(error.keyValue)[0];
+          const value = error.keyValue[field];
+          throw new GraphQLError(
+            `Book validation failed: ${field} must be unique. Value '${value}' is already taken.`,
+            {
+              extensions: {
+                code: "BAD_USER_INPUT",
+                invalidArgs: { title: args.title },
+              },
+            }
+          );
+        }
+
+        throw new GraphQLError(
+          "Saving new book failed due to an unexpected error.",
+          {
+            extensions: { code: "INTERNAL_SERVER_ERROR" },
+          }
+        );
       }
 
-      // NOTE: This adds an extra DB call, populate in the main find is better.
+      // NOTE: This adds an extra DB call, populate in the main find might be better.
       const savedBook = await Book.findById(book._id).populate("author");
+      if (!savedBook || !savedBook.author) {
+        console.error(`!!! Population failed post-save for book ${book._id}`);
+        throw new GraphQLError(
+          `Failed to retrieve or populate the newly added book correctly.`
+        );
+      }
       return savedBook;
     },
 
@@ -136,12 +204,39 @@ const resolvers = {
       }
 
       author.born = args.setBornTo;
+
       try {
         await author.save();
         return author;
       } catch (error) {
         console.error("Error updating author:", error.message);
-        throw new Error(`Error updating author: ${error.message}`);
+        if (error.name === "ValidationError") {
+          const messages = Object.values(error.errors)
+            .map((val) => val.message)
+            .join(", ");
+          throw new GraphQLError(`Failed to update author: ${messages}`, {
+            extensions: {
+              code: "BAD_USER_INPUT",
+              invalidArgs: args,
+              errorDetails: error.errors,
+            },
+          });
+        } else if (error.code === 11000 || error.code === 11001) {
+          const field = Object.keys(error.keyValue)[0];
+          const value = error.keyValue[field];
+          throw new GraphQLError(
+            `Author update failed: ${field} must be unique. Value '${value}' is already taken.`,
+            {
+              extensions: { code: "BAD_USER_INPUT", invalidArgs: args },
+            }
+          );
+        }
+        throw new GraphQLError(
+          "Updating author failed due to an unexpected error.",
+          {
+            extensions: { code: "INTERNAL_SERVER_ERROR" },
+          }
+        );
       }
     },
   },
