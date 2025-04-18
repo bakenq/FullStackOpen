@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client";
 import { ADD_BOOK, ALL_BOOKS, ALL_AUTHORS } from "../queries";
+import { updateCache } from "../App";
 
 const NewBook = (props) => {
   const [title, setTitle] = useState("");
@@ -11,13 +12,23 @@ const NewBook = (props) => {
   const [errorMessage, setErrorMessage] = useState(null);
 
   const [createBook, { loading, error }] = useMutation(ADD_BOOK, {
-    refetchQueries: [{ query: ALL_BOOKS }, { query: ALL_AUTHORS }],
+    //refetchQueries: [{ query: ALL_BOOKS }, { query: ALL_AUTHORS }],
     onError: (error) => {
       const message = error.graphQLErrors.map((e) => e.message).join("\n");
       setErrorMessage(message);
       setTimeout(() => {
         setErrorMessage(null);
       }, 5000);
+    },
+    update: (cache, response) => {
+      if (response.data && response.data.addBook) {
+        const addedBook = response.data.addBook;
+        updateCache(cache, { query: ALL_BOOKS }, addedBook);
+      } else {
+        console.error(
+          "Mutation response missing data.addBook, cannot update cache."
+        );
+      }
     },
     onCompleted: () => {
       setTitle("");

@@ -5,7 +5,7 @@ import NewBook from "./components/NewBook";
 import Login from "./components/LoginForm";
 import Recommended from "./components/Recommended";
 import { useApolloClient, useSubscription } from "@apollo/client";
-import { BOOK_ADDED } from "./queries";
+import { BOOK_ADDED, ALL_BOOKS } from "./queries";
 
 const Notify = ({ message }) => {
   if (!message) {
@@ -20,6 +20,36 @@ const Notify = ({ message }) => {
     borderColor: message.type === "error" ? "red" : "green",
   };
   return <div style={style}>{message.text}</div>;
+};
+
+export const updateCache = (cache, query, addedBook) => {
+  const uniqById = (a) => {
+    let seen = new Set();
+    return a.filter((item) => {
+      let k = item?.id;
+      return k ? (seen.has(k) ? false : seen.add(k)) : true;
+    });
+  };
+
+  cache.updateQuery(query, (cachedData) => {
+    if (!cachedData || !cachedData.allBooks) {
+      console.warn(
+        "updateCache: Query not found in cache or has unexpected structure",
+        query
+      );
+      return cachedData;
+    }
+
+    console.log(
+      "updateCache: Updating cache for query:",
+      query,
+      "with book:",
+      addedBook.title
+    );
+    return {
+      allBooks: uniqById(cachedData.allBooks.concat(addedBook)),
+    };
+  });
 };
 
 const App = () => {
@@ -45,8 +75,16 @@ const App = () => {
 
   useSubscription(BOOK_ADDED, {
     onData: ({ data }) => {
-      const addedBook = data.data.bookAdded;
-      notify(`New book added: ${addedBook.title} by ${addedBook.author.name}`);
+      if (data && data.data && data.data.bookAdded) {
+        const addedBook = data.data.bookAdded;
+        notify(
+          `New book added: ${addedBook.title} by ${addedBook.author.name}`
+        );
+
+        updateCache(client.cache, { query: ALL_BOOKS }, addedBook);
+      } else {
+        console.warn("Subscription received empty or malformed data");
+      }
     },
     onError: (error) => {
       console.error("Subscription error:", error);
