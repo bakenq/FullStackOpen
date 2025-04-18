@@ -12,6 +12,10 @@ const Books = (props) => {
   if (result.error)
     return <div>Error loading books: {result.error.message}</div>;
 
+  if (!result.data || !result.data.allBooks) {
+    return <div>No books found</div>;
+  }
+
   const books = result.data.allBooks;
 
   return (
@@ -28,7 +32,7 @@ const Books = (props) => {
           {books.map((a) => (
             <tr key={a.id}>
               <td>{a.title}</td>
-              <td>{a.author}</td>
+              <td>{a.author ? a.author.name : "N/A"}</td>
               <td>{a.published}</td>
             </tr>
           ))}
