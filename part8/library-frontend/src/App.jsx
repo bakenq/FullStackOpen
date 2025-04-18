@@ -7,6 +7,8 @@ import Recommended from "./components/Recommended";
 import { useApolloClient, useSubscription } from "@apollo/client";
 import { BOOK_ADDED, ALL_BOOKS } from "./queries";
 
+import { updateCache } from "../utils/cacheUpdater";
+
 const Notify = ({ message }) => {
   if (!message) {
     return null;
@@ -20,36 +22,6 @@ const Notify = ({ message }) => {
     borderColor: message.type === "error" ? "red" : "green",
   };
   return <div style={style}>{message.text}</div>;
-};
-
-export const updateCache = (cache, query, addedBook) => {
-  const uniqById = (a) => {
-    let seen = new Set();
-    return a.filter((item) => {
-      let k = item?.id;
-      return k ? (seen.has(k) ? false : seen.add(k)) : true;
-    });
-  };
-
-  cache.updateQuery(query, (cachedData) => {
-    if (!cachedData || !cachedData.allBooks) {
-      console.warn(
-        "updateCache: Query not found in cache or has unexpected structure",
-        query
-      );
-      return cachedData;
-    }
-
-    console.log(
-      "updateCache: Updating cache for query:",
-      query,
-      "with book:",
-      addedBook.title
-    );
-    return {
-      allBooks: uniqById(cachedData.allBooks.concat(addedBook)),
-    };
-  });
 };
 
 const App = () => {

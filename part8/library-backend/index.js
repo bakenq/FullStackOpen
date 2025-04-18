@@ -12,13 +12,18 @@ const cors = require("cors");
 const http = require("http");
 const jwt = require("jsonwebtoken");
 
+const DataLoader = require("dataloader");
+
 const { WebSocketServer } = require("ws");
 const { useServer } = require("graphql-ws/use/ws");
+
+const { batchBookCounts } = require("./graphql/loaders");
 
 const typeDefs = require("./graphql/typeDefs");
 const resolvers = require("./graphql/resolvers");
 
 const User = require("./models/user");
+const Book = require("./models/book");
 
 const start = async () => {
   const app = express();
@@ -72,7 +77,11 @@ const start = async () => {
             console.error("Invalid/Expired token:", error.message);
           }
         }
-        return { currentUser };
+        const loaders = {
+          bookCountLoader: new DataLoader(batchBookCounts),
+        };
+
+        return { currentUser, loaders };
       },
     })
   );

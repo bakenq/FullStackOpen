@@ -39,13 +39,17 @@ const resolvers = {
   },
 
   Author: {
-    bookCount: async (root) => {
-      /*
-      // --- Broken for now ---
-      const booksByAuthor = books.filter((book) => book.author === root.name);
-      return booksByAuthor.length;
-      */
-      return 0;
+    bookCount: async (root, args, context) => {
+      try {
+        const count = await context.loaders.bookCountLoader.load(root.id);
+        return count;
+      } catch (error) {
+        console.error(
+          `Error loading bookCount for author ${parent.id}:`,
+          error
+        );
+        return 0;
+      }
     },
   },
 
