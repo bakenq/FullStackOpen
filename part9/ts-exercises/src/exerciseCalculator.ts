@@ -14,6 +14,7 @@ const calculateExercises = (
 ): ExerciseResult => {
   const periodLength = dailyHours.length;
 
+  // Shouldn't happen with CLI validation
   if (periodLength === 0) {
     return {
       periodLength: 0,
@@ -57,4 +58,45 @@ const calculateExercises = (
   return result;
 };
 
-console.log(calculateExercises([3, 0, 2, 4.5, 0, 3, 1], 2)); // Example usage
+interface ExerciseValues {
+  target: number;
+  dailyHours: number[];
+}
+
+const parseExerciseArguments = (args: string[]): ExerciseValues => {
+  if (args.length < 4)
+    throw new Error("Not enough arguments (need target and at least one day)");
+
+  const targetStr = args[2];
+  const dailyHoursStr = args.slice(3);
+
+  const allNumeric = [targetStr, ...dailyHoursStr].every(
+    (arg) => !isNaN(Number(arg))
+  );
+
+  if (!allNumeric) {
+    throw new Error(
+      "Provided values (target and all daily hours) must be numbers!"
+    );
+  }
+
+  const target = Number(targetStr);
+  const dailyHours = dailyHoursStr.map((hourStr) => Number(hourStr));
+
+  return {
+    target: target,
+    dailyHours: dailyHours,
+  };
+};
+
+try {
+  const { target, dailyHours } = parseExerciseArguments(process.argv);
+  const result = calculateExercises(dailyHours, target);
+  console.log(result);
+} catch (error: unknown) {
+  let errorMessage = "Something went wrong: ";
+  if (error instanceof Error) {
+    errorMessage += error.message;
+  }
+  console.error(errorMessage);
+}

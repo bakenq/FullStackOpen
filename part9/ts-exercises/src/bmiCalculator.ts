@@ -13,4 +13,36 @@ const calculateBmi = (height: number, weight: number): string => {
   }
 };
 
-console.log(calculateBmi(180, 74)); // Normal range
+interface BmiValues {
+  height: number;
+  weight: number;
+}
+
+const parseBmiArguments = (args: string[]): BmiValues => {
+  if (args.length < 4) throw new Error("Not enough arguments");
+  if (args.length > 4) throw new Error("Too many arguments");
+
+  const height = Number(args[2]);
+  const weight = Number(args[3]);
+
+  if (!isNaN(height) && !isNaN(weight)) {
+    return {
+      height: height,
+      weight: weight,
+    };
+  } else {
+    throw new Error("Provided values were not numbers!");
+  }
+};
+
+try {
+  const { height, weight } = parseBmiArguments(process.argv);
+  const result = calculateBmi(height, weight);
+  console.log(result);
+} catch (error: unknown) {
+  let errorMessage = "Something went wrong: ";
+  if (error instanceof Error) {
+    errorMessage += error.message;
+  }
+  console.error(errorMessage);
+}
