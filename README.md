@@ -19,7 +19,7 @@ The code in this repository is organized into folders, corresponding to the diff
 | [6](./part6/) |    Done     |   24/24   |
 | [7](./part7/) |    Done     |   21/21   |
 | [8](./part8/) |    Done     |   26/26   |
-| [9](./part9/) | In Progress |   0/30    |
+| [9](./part9/) | In Progress |   1/30    |
 
 ## Course certificates
 
@@ -27,6 +27,6 @@ The code in this repository is organized into folders, corresponding to the diff
 
 ![Full Stack Open core Certificate](./img/certificate-fullstack.png)
 
-### Full Stack Open: GraphQL (Part 8)
+### Full Stack GraphQL (Part 8)
 
 ![Full Stack Open GraphQL Certificate](./img/certificate-graphql.png)
