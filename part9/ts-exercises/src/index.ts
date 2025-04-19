@@ -32,6 +32,11 @@ app.get("/bmi", (req, res) => {
       bmi: bmiResult,
     });
   } catch (error: unknown) {
+    let errorMessage = "Something went wrong: ";
+    if (error instanceof Error) {
+      errorMessage += error.message;
+    }
+    console.error(errorMessage);
     res.status(400).json({ error: "malformatted parameters" });
   }
 });
