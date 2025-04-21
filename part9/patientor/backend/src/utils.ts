@@ -1,4 +1,4 @@
-import { NewPatientEntry } from "./types";
+import { NewPatientEntry, Gender } from "./types";
 
 // --- Type Guards ---
 
@@ -8,6 +8,13 @@ const isString = (text: unknown): text is string => {
 
 const isDate = (date: string): boolean => {
   return Boolean(Date.parse(date));
+};
+
+const isGender = (param: unknown): param is Gender => {
+  if (!isString(param)) {
+    return false;
+  }
+  return Object.values(Gender).includes(param as Gender);
 };
 
 // --- Parsers ---
@@ -34,6 +41,18 @@ const parseDate = (date: unknown): string => {
   return date;
 };
 
+const parseGender = (gender: unknown): Gender => {
+  if (gender === null || gender === undefined) {
+    throw new Error("Missing gender");
+  }
+  if (!isGender(gender)) {
+    throw new Error(
+      `Incorrect gender: Expected one of ${Object.values(Gender).join(", ")}`
+    );
+  }
+  return gender;
+};
+
 // --- Main Validator Function ---
 
 const toNewPatientEntry = (object: unknown): NewPatientEntry => {
@@ -52,7 +71,7 @@ const toNewPatientEntry = (object: unknown): NewPatientEntry => {
       name: parseString(object.name, "name"),
       dateOfBirth: parseDate(object.dateOfBirth),
       ssn: parseString(object.ssn, "ssn"),
-      gender: parseString(object.gender, "gender"),
+      gender: parseGender(object.gender),
       occupation: parseString(object.occupation, "occupation"),
     };
     return newEntry;
