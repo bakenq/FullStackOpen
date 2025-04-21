@@ -17,7 +17,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zod": "^3.24.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
