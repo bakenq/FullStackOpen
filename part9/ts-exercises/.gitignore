@@ -26,3 +26,7 @@ coverage
 
 # Env
 .env
+
+# Requests
+*.http
+*.rest
