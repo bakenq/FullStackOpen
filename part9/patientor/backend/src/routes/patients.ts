@@ -2,7 +2,7 @@ import express from "express";
 import { z } from "zod";
 import patientService from "../services/patientService";
 import { NewPatientEntry } from "../types";
-import toNewPatientEntry from "../utils";
+import { toNewPatientEntry, toNewEntry } from "../utils";
 
 const router = express.Router();
 
@@ -37,6 +37,34 @@ router.post("/", (req, res) => {
     res.json(responsePatient);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
+      res.status(400).send({ error: error.issues });
+    } else if (error instanceof Error) {
+      res.status(400).send({ error: error.message });
+    } else {
+      res.status(500).send({ error: "An unknown error occurred" });
+    }
+  }
+});
+
+router.post("/:id/entries", (req, res) => {
+  const patientId = req.params.id;
+  try {
+    // This now calls the Zod-powered validation utility
+    const newEntryData = toNewEntry(req.body);
+    const addedEntry = patientService.addEntryForPatient(
+      patientId,
+      newEntryData
+    );
+
+    if (addedEntry) {
+      res.status(201).json(addedEntry);
+    } else {
+      res.status(404).send({ error: `Patient with ID ${patientId} not found` });
+    }
+  } catch (error: unknown) {
+    // Catches ZodError from toNewEntry or other errors
+    if (error instanceof z.ZodError) {
+      // Sends the detailed Zod issues array
       res.status(400).send({ error: error.issues });
     } else if (error instanceof Error) {
       res.status(400).send({ error: error.message });
