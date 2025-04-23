@@ -19,7 +19,7 @@ The code in this repository is organized into folders, corresponding to the diff
 | [6](./part6/) |    Done     |   24/24   |
 | [7](./part7/) |    Done     |   21/21   |
 | [8](./part8/) |    Done     |   26/26   |
-| [9](./part9/) | In Progress |   27/30   |
+| [9](./part9/) | In Progress |   28/30   |
 
 ## Course certificates
 
