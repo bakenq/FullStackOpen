@@ -1,36 +1,49 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { Patient, Entry } from "../../types"; // Import full Patient type
+import { Patient, Entry, Diagnosis } from "../../types";
+
+import diagnosesService from "../../services/diagnoses";
 
 const PatienInformationPage = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const apiBaseUrl = "http://localhost:3001";
 
   useEffect(() => {
-    const fetchPatientDetails = async () => {
+    const fetchPatientAndDiagnoses = async () => {
       if (!id) {
         setError("Patient ID missing.");
         setLoading(false);
         return;
       }
+
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get<Patient>(
+
+        const patientResponse = await axios.get<Patient>(
           `${apiBaseUrl}/api/patients/${id}`
         );
-        setPatient(response.data);
+        setPatient(patientResponse.data);
+
+        const diagnosesList = await diagnosesService.getAll();
+        setDiagnoses(diagnosesList);
       } catch (e: unknown) {
+        let errorMessage = "Failed to fetch data.";
         // Handle errors
-        let errorMessage = "Failed to fetch patient details.";
         if (axios.isAxiosError(e)) {
-          if (e.response?.status === 404) {
+          if (
+            e.request?.responseURL?.includes(`/api/patients/${id}`) &&
+            e.response?.status === 404
+          ) {
             errorMessage = "Patient not found.";
+          } else if (e.request?.responseURL?.includes("/api/diagnoses")) {
+            errorMessage = "Failed to fetch diagnoses list.";
           } else {
             errorMessage += ` Error: ${e.message}`;
           }
@@ -40,13 +53,18 @@ const PatienInformationPage = () => {
         console.error(errorMessage);
         setError(errorMessage);
         setPatient(null);
+        setDiagnoses([]);
       } finally {
         setLoading(false);
       }
     };
 
-    void fetchPatientDetails();
+    void fetchPatientAndDiagnoses();
   }, [id]);
+
+  const getDiagnosisName = (code: string): string | undefined => {
+    return diagnoses.find((d) => d.code === code)?.name;
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -77,7 +95,9 @@ const PatienInformationPage = () => {
               <>
                 <ul>
                   {entry.diagnosisCodes.map((code) => (
-                    <li key={code}>{code}</li>
+                    <li key={code}>
+                      {code} {getDiagnosisName(code) || "(Code not found)"}
+                    </li>
                   ))}
                 </ul>
               </>
