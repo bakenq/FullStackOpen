@@ -30,3 +30,7 @@ The code in this repository is organized into folders, corresponding to the diff
 ### Full Stack GraphQL (Part 8)
 
 ![Full Stack Open GraphQL Certificate](./img/certificate-graphql.png)
+
+### Full Stack Open TypeScript (Part 9)
+
+![Full Stack Open TypeScript Certificate](./img/certificate-typescript.png)
