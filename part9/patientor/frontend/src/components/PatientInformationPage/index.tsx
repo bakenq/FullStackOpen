@@ -3,7 +3,13 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { Patient, Entry, Diagnosis } from "../../types";
 
+import EntryDetails from "./EntryDetails";
+
 import diagnosesService from "../../services/diagnoses";
+
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import WorkIcon from "@mui/icons-material/Work";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 
 const PatienInformationPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -66,6 +72,19 @@ const PatienInformationPage = () => {
     return diagnoses.find((d) => d.code === code)?.name;
   };
 
+  const EntryIcon = ({ type }: { type: Entry["type"] }) => {
+    switch (type) {
+      case "HealthCheck":
+        return <MedicalServicesIcon />;
+      case "OccupationalHealthcare":
+        return <WorkIcon />;
+      case "Hospital":
+        return <LocalHospitalIcon />;
+      default:
+        return null;
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -84,13 +103,25 @@ const PatienInformationPage = () => {
       <p>SSN: {patient.ssn}</p>
       <p>Occupation: {patient.occupation}</p>
       <p>Date of Birth: {patient.dateOfBirth}</p>
+
       <h3>Entries</h3>
       {patient.entries.length > 0 ? (
         patient.entries.map((entry: Entry) => (
-          <div key={entry.id}>
+          <div
+            key={entry.id}
+            style={{
+              border: "1px solid grey",
+              borderRadius: "5px",
+              padding: "2px",
+              marginBottom: "5px",
+            }}
+          >
             <p>
-              {entry.date} {entry.description}
+              {entry.date} <EntryIcon type={entry.type} />
             </p>
+            <p>{entry.description}</p>
+
+            <EntryDetails entry={entry} />
             {entry.diagnosisCodes && entry.diagnosisCodes.length > 0 && (
               <>
                 <ul>
@@ -102,6 +133,7 @@ const PatienInformationPage = () => {
                 </ul>
               </>
             )}
+            <p>Diagnose by {entry.specialist}</p>
           </div>
         ))
       ) : (
