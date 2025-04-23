@@ -68,13 +68,22 @@ const PatienInformationPage = () => {
       <p>Date of Birth: {patient.dateOfBirth}</p>
       <h3>Entries</h3>
       {patient.entries.length > 0 ? (
-        <ul>
-          {/* Render entries later when Entry type has details */}
-          {patient.entries.map((entry: Entry, index: number) => (
-            // For now, just show something basic since Entry is empty
-            <li key={index}>Entry {index + 1} (details TBD)</li>
-          ))}
-        </ul>
+        patient.entries.map((entry: Entry) => (
+          <div key={entry.id}>
+            <p>
+              {entry.date} {entry.description}
+            </p>
+            {entry.diagnosisCodes && entry.diagnosisCodes.length > 0 && (
+              <>
+                <ul>
+                  {entry.diagnosisCodes.map((code) => (
+                    <li key={code}>{code}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        ))
       ) : (
         <p>No entries for this patient yet.</p>
       )}
